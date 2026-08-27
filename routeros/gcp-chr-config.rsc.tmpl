@@ -1,0 +1,34 @@
+# =============================================================================
+# MikroTik RouterOS v7 Configuration Script: GCP CHR (Side B)
+# Topology: GCP (asia-southeast2) <---> Alibaba Cloud (ap-southeast-5)
+# =============================================================================
+
+# 1. Interface & IP Naming
+/interface set [ find default-name=ether1 ] name=ether1-wan comment="GCP Primary/Peering Subnet (WAN/Static IP)"
+/interface set [ find default-name=ether2 ] name=ether2-private comment="GCP Workload Subnet"
+
+# 2. IPsec Profile & Proposal (IKEv2, AES-GCM-256, DH Group 14/19)
+/ip ipsec profile add name=alibaba-ikev2-profile dh-group=modp2048,ecp256 enc-algorithm=aes-256 hash-algorithm=sha256 prf-algorithm=sha256 lifetime=1d nat-traversal=yes
+/ip ipsec proposal add name=alibaba-ipsec-prop auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=8h pfs-group=modp2048
+
+# 3. IPsec Peer (Connect to Alibaba CHR Static EIP: 8.215.24.90)
+/ip ipsec peer add name=peer-alibaba-chr address=8.215.24.90/32 profile=alibaba-ikev2-profile exchange-mode=ike2
+
+# 4. IPsec Identity (Pre-Shared Key)
+/ip ipsec identity add peer=peer-alibaba-chr auth-method=pre-shared-key secret="YOUR_STRONG_PRESHARED_KEY"
+
+# 5. IPIP / GRE Tunnel Interface over IPsec
+/interface ipip add name=ipip-to-alibaba local-address=GCP_CHR_PRIVATE_IP remote-address=8.215.24.90 ipsec-secret="YOUR_STRONG_PRESHARED_KEY" allow-fast-path=no comment="Tunnel to Alibaba CHR"
+/ip address add address=10.254.254.2/30 interface=ipip-to-alibaba network=10.254.254.0
+
+# 6. BGP Configuration (RouterOS v7)
+# GCP CHR ASN: 65535 | Alibaba CHR ASN: 65534
+/routing bgp template set default disabled=no as=65535 router-id=10.160.0.10
+/routing bgp connection add name=bgp-to-alibaba as=65535 remote.address=10.254.254.1/32 remote.as=65534 local.role=ebgp local.address=10.254.254.2 templates=default connect=yes listen=yes output.network=10.160.0.0/16
+
+# 7. NAT & Forwarding Rules
+# Masquerade outbound internet traffic
+/ip firewall nat add chain=srcnat out-interface=ether1-wan action=masquerade comment="NAT Egress Internet"
+
+# Bypass NAT for cross-cloud traffic to Alibaba Cloud (10.151.64.0/18)
+/ip firewall nat add chain=srcnat dst-address=10.151.64.0/18 action=accept place-before=0 comment="Do NOT NAT traffic to Alibaba"

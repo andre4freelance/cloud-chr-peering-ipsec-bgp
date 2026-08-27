@@ -1,0 +1,167 @@
+##############################################################################
+# Dedicated Security Groups for each interface
+##############################################################################
+
+# Security Group 1: Dedicated for Primary Interface (Peering Subnet / Public-facing)
+resource "alicloud_security_group" "peering_sg" {
+  security_group_name = "${var.instance_name}-peering-sg"
+  vpc_id              = var.vpc_id
+  resource_group_id   = var.resource_group_id
+  description         = "Dedicated Security Group for ${var.instance_name} primary peering interface"
+
+  tags = {
+    Name        = "${var.instance_name}-peering-sg"
+    Environment = "ManagedService"
+    Project     = "managedservice"
+    Tier        = "peering"
+    Owner       = "ics-ms"
+    ManagedBy   = "terraform"
+    CostCenter  = "managedservice"
+  }
+}
+
+# Whitelist SSH (Port 22) from Admin IP only
+resource "alicloud_security_group_rule" "peering_ingress_ssh" {
+  type              = "ingress"
+  ip_protocol       = "tcp"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "${var.ssh_port}/${var.ssh_port}"
+  security_group_id = alicloud_security_group.peering_sg.id
+  cidr_ip           = var.admin_ip_cidr
+  description       = "SSH management from Admin IP"
+}
+
+# Whitelist Winbox (Port 8291) from Admin IP only
+resource "alicloud_security_group_rule" "peering_ingress_winbox" {
+  type              = "ingress"
+  ip_protocol       = "tcp"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "${var.winbox_port}/${var.winbox_port}"
+  security_group_id = alicloud_security_group.peering_sg.id
+  cidr_ip           = var.admin_ip_cidr
+  description       = "Winbox management from Admin IP"
+}
+
+# Security Group 2: Dedicated for Secondary Interface (Private Subnet)
+resource "alicloud_security_group" "private_sg" {
+  security_group_name = "${var.instance_name}-private-sg"
+  vpc_id              = var.vpc_id
+  resource_group_id   = var.resource_group_id
+  description         = "Dedicated Security Group for ${var.instance_name} secondary private interface"
+
+  tags = {
+    Name        = "${var.instance_name}-private-sg"
+    Environment = "ManagedService"
+    Project     = "managedservice"
+    Tier        = "private"
+    Owner       = "ics-ms"
+    ManagedBy   = "terraform"
+    CostCenter  = "managedservice"
+  }
+}
+
+# Allow all internal VPC traffic on the private interface
+resource "alicloud_security_group_rule" "private_ingress_internal_vpc" {
+  type              = "ingress"
+  ip_protocol       = "all"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "-1/-1"
+  security_group_id = alicloud_security_group.private_sg.id
+  cidr_ip           = "10.151.64.0/18"
+  description       = "Allow internal VPC traffic on private ENI"
+}
+
+##############################################################################
+# Compute Instance: MikroTik CHR
+##############################################################################
+
+resource "alicloud_instance" "chr" {
+  instance_name        = var.instance_name
+  host_name            = var.instance_name
+  image_id             = var.image_id
+  instance_type        = var.instance_type
+  availability_zone    = var.zone_id
+  security_groups      = [alicloud_security_group.peering_sg.id]
+  vswitch_id           = var.peering_vswitch_id
+  instance_charge_type = "PostPaid"
+  resource_group_id    = var.resource_group_id
+  system_disk_category = var.system_disk_category
+  system_disk_size     = var.system_disk_size
+  private_ip           = var.peering_private_ip
+
+  internet_max_bandwidth_out = 0
+
+  lifecycle {
+    ignore_changes = [password, image_id]
+  }
+
+  tags = {
+    Name        = var.instance_name
+    Environment = "ManagedService"
+    Project     = "managedservice"
+    Owner       = "ics-ms"
+    ManagedBy   = "terraform"
+    CostCenter  = "managedservice"
+  }
+}
+
+##############################################################################
+# Static Public IP (Elastic IP) attached to Primary Interface
+##############################################################################
+
+resource "alicloud_eip_address" "chr_eip" {
+  address_name         = "${var.instance_name}-eip"
+  internet_charge_type = "PayByTraffic"
+  bandwidth            = var.eip_bandwidth
+  resource_group_id    = var.resource_group_id
+  payment_type         = "PayAsYouGo"
+
+  tags = {
+    Name        = "${var.instance_name}-eip"
+    Environment = "ManagedService"
+    Project     = "managedservice"
+    Owner       = "ics-ms"
+    ManagedBy   = "terraform"
+    CostCenter  = "managedservice"
+  }
+}
+
+resource "alicloud_eip_association" "chr_eip_assoc" {
+  allocation_id = alicloud_eip_address.chr_eip.id
+  instance_id   = alicloud_instance.chr.id
+  instance_type = "EcsInstance"
+}
+
+##############################################################################
+# Secondary Network Interface (Private Subnet 5a)
+##############################################################################
+
+resource "alicloud_ecs_network_interface" "private_eni" {
+  network_interface_name = "${var.instance_name}-private-eni"
+  vswitch_id             = var.private_vswitch_id
+  security_group_ids     = [alicloud_security_group.private_sg.id]
+  description            = "CHR secondary private-side ENI"
+  resource_group_id      = var.resource_group_id
+  primary_ip_address     = var.private_eni_ip
+
+  tags = {
+    Name        = "${var.instance_name}-private-eni"
+    Environment = "ManagedService"
+    Project     = "managedservice"
+    Tier        = "private"
+    Owner       = "ics-ms"
+    ManagedBy   = "terraform"
+    CostCenter  = "managedservice"
+  }
+}
+
+resource "alicloud_ecs_network_interface_attachment" "private_eni_attach" {
+  network_interface_id = alicloud_ecs_network_interface.private_eni.id
+  instance_id          = alicloud_instance.chr.id
+}

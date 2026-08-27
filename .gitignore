@@ -1,0 +1,10 @@
+# Local secrets and environment variables
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+vars.env
+*.key
+*.pem
