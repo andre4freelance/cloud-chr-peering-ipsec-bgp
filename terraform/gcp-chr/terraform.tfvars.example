@@ -1,10 +1,20 @@
-project_id          = "your-gcp-project-id"
-region              = "asia-southeast2"
-zone                = "asia-southeast2-a"
-vpc_name            = "gcp-hub-vpc"
-peering_subnet_cidr = "10.160.0.0/28"
-private_subnet_cidr = "10.160.10.0/24"
-instance_name       = "gcp-chr-peering"
-machine_type        = "e2-small"
-chr_custom_image    = "mikrotik-chr-7"
-admin_ip_cidr       = "103.94.10.189/32"
+project_id           = "your-gcp-project-id"
+region               = "asia-southeast2"
+zone                 = "asia-southeast2-a"
+vpc_name             = "nextops-shared-vpc"
+peering_subnet_name  = "nextops-peering-apse2-subnet"
+peering_nic_ip       = "10.101.16.10"
+workload_subnet_name = "nextops-prod-apse2-subnet"
+workload_nic_ip      = "10.101.0.10"
+instance_name        = "chr-peering"
+machine_type         = "e2-micro"
+chr_custom_image     = "mikrotik-chr-7-24-1"
+
+# Kept at the legacy name on purpose — see the comment on static_ip_name in
+# variables.tf. Renaming this destroys the reservation and returns a new IP.
+static_ip_name = "gcp-chr-peering-static-ip"
+
+admin_ip_cidrs = ["103.94.10.189/32", "103.165.198.50/32", "180.243.7.53/32"]
+
+alibaba_chr_public_ip = "8.215.24.90"
+alibaba_vpc_cidr      = "10.151.64.0/18"

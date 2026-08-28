@@ -49,7 +49,18 @@ variable "workload_nic_ip" {
 variable "instance_name" {
   description = "Name of the MikroTik CHR VM in GCP"
   type        = string
-  default     = "gcp-chr-peering"
+  default     = "chr-peering"
+}
+
+# Pinned deliberately, NOT derived from instance_name.
+# Renaming a google_compute_address destroys it and a new one gets a fresh
+# random IP. 34.101.118.166 is hardcoded in the Alibaba security group and in
+# the peer address of the Alibaba CHR IPsec config, so losing it means
+# reconfiguring both sides. Keep the legacy name; the IP is what matters.
+variable "static_ip_name" {
+  description = "Name of the reserved regional address holding the CHR public IP"
+  type        = string
+  default     = "gcp-chr-peering-static-ip"
 }
 
 variable "machine_type" {
@@ -67,7 +78,11 @@ variable "chr_custom_image" {
 variable "admin_ip_cidrs" {
   description = "Admin IP CIDR whitelist for SSH and Winbox management"
   type        = list(string)
-  default     = ["103.94.10.189/32", "103.165.198.50/32"]
+  default = [
+    "103.94.10.189/32",
+    "103.165.198.50/32",
+    "180.243.7.53/32", # workstation, dynamic ISP IP — refresh when Winbox starts timing out
+  ]
 }
 
 variable "alibaba_chr_public_ip" {

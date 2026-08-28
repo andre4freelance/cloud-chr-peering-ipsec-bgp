@@ -23,10 +23,19 @@ data "google_compute_subnetwork" "workload_subnet" {
 
 # 1. Static Regional Public IP for Primary Interface (nic0)
 resource "google_compute_address" "chr_static_ip" {
-  name        = "${var.instance_name}-static-ip"
-  region      = var.region
-  project     = var.project_id
-  description = "Dedicated Static Public IP for ${var.instance_name} primary peering interface"
+  name    = var.static_ip_name
+  region  = var.region
+  project = var.project_id
+  # Verbatim from the live resource. On google_compute_address, `description` is
+  # ForceNew — editing this string alone is enough to destroy the reservation and
+  # hand back a different IP. Do not "clean up" this wording.
+  description = "Dedicated Static Public IP for gcp-chr-peering primary peering interface"
+
+  # The peer address on the Alibaba side points at this exact IP. Never let a
+  # rename of the instance cascade into replacing this address.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 ##############################################################################
@@ -83,10 +92,10 @@ resource "google_compute_firewall" "nic1_allow_internal_vpc" {
   }
 
   source_ranges = [
-    "10.101.0.0/16",       # Entire GCP Shared VPC Supernet
-    var.alibaba_vpc_cidr   # Alibaba Cloud VPC Subnet (10.151.64.0/18)
+    "10.101.0.0/16",     # Entire GCP Shared VPC Supernet
+    var.alibaba_vpc_cidr # Alibaba Cloud VPC Subnet (10.151.64.0/18)
   ]
-  target_tags   = ["gcp-chr-workload-nic1"]
+  target_tags = ["gcp-chr-workload-nic1"]
 }
 
 ##############################################################################

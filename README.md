@@ -29,7 +29,7 @@ This repository contains the Terraform infrastructure code and MikroTik RouterOS
 |                                    GCP (asia-southeast2)                                |
 |                                                                                         |
 |                          +-----------------------------------------------------+        |
-|                          |      [MikroTik CHR: gcp-chr-peering (ASN 65535)]    |        |
+|                          |        [MikroTik CHR: chr-peering (ASN 65535)]      |        |
 |                          |           /                         \              |        |
 |                          |  Primary NIC (nic0)         Secondary NIC (nic1)   |        |
 |                          |  10.101.16.10               10.101.0.10            |        |
