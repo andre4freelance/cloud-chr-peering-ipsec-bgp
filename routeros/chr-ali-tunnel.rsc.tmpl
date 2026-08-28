@@ -1,0 +1,190 @@
+# MikroTik CHR — Alibaba Cloud end of the Alibaba <-> GCP tunnel
+#
+# Template. Substitute @@PLACEHOLDERS@@ from vars.env (apply.sh does this) and
+# feed the result to the device. `add` lines duplicate on re-run — apply.sh
+# removes the matching objects first. Never commit a rendered copy: it holds
+# the PSK.
+#
+# Assumes ether1 on the peering vswitch (10.151.127.240/28, carries the EIP via
+# 1:1 NAT) and ether2 on the private vswitch (10.151.74.0/24).
+
+# --- Why the selectors look the way they do ----------------------------------
+# BOTH ends are CHR behind 1:1 NAT — neither box has its public address on any
+# interface. That is different from the earlier CHR<->pfSense build, where only
+# one side was NAT'd and the fix was to give pfSense its own public IP as a VIP
+# so the selectors would mirror.
+#
+# Here the symmetry is free: use each side's PEERING-SUBNET PRIVATE address on
+# both sides of the selector.
+#
+#   Ali  policy: src=@@ALI_PEERING_IP@@/32  dst=@@GCP_PEERING_IP@@/32
+#   GCP  policy: src=@@GCP_PEERING_IP@@/32  dst=@@ALI_PEERING_IP@@/32
+#
+# Exact mirror images, no VIP trickery. Copying the pfSense build's
+# private<->PEER-PUBLIC pairing here instead fails with TS_UNACCEPTABLE: the
+# traffic-selector payload is negotiated data, NOT something 1:1 NAT rewrites,
+# so both ends must name the same literal values. (Tried it; the SA never
+# reaches phase 2 and the policy loses its ACTIVE flag.)
+#
+# The OUTER packet is a different matter:
+# sa-dst-address is the peer's PUBLIC address, so the ESP leaves this box as
+# @@ALI_PEERING_IP@@ -> @@GCP_PUBLIC_IP@@ and Alibaba 1:1-NATs the source to
+# @@ALI_PUBLIC_IP@@ on the way out. NAT-T is therefore mandatory and every ESP
+# packet rides UDP 4500 — opening bare ESP (IP proto 50) achieves nothing.
+#
+# IKE identities must be set explicitly to the PUBLIC addresses. The default is
+# derived from the interface, which here is private, and the peer rejects it.
+#
+# A static /32 route to the peer's peering address is required further down:
+# without it the GRE packet has nowhere to go and the policy never gets a chance
+# to match. The route points at the normal default gateway — the packet does NOT
+# leave in the clear, the IPsec policy intercepts it on the output path.
+
+/ip service
+set ssh port=22
+set winbox port=8291
+set ftp disabled=yes
+set telnet disabled=yes
+set www disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+
+# GRE inside IPsec produces packets the default fragment threshold handles badly.
+/ip settings
+set ipv4-high-fragment-thresh=16.0MiB
+
+# --- IPsec -------------------------------------------------------------------
+/ip ipsec profile
+add name=gcp dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h
+
+# AEAD ONLY — this is not a preference, it is the fix for a hard failure.
+# With aes-256-cbc + sha256 both SAs reach `mature` and the outbound counter
+# climbs, but every inbound packet dies in the transform: GRE shows RX=0 on both
+# ends and `/ip/ipsec/statistics` in-state-protocol-errors rises ~1 per packet
+# sent. The tell is the `H - HW-AEAD` flag on an SA whose cipher is CBC+HMAC,
+# i.e. not AEAD at all — the wrong offload path. aes-256-gcm carries its own
+# integrity, so auth-algorithms MUST be empty.
+/ip ipsec proposal
+add name=gcp auth-algorithms="" enc-algorithms=aes-256-gcm \
+    pfs-group=modp2048 lifetime=1h
+
+/ip ipsec peer
+add name=gcp address=@@GCP_PUBLIC_IP@@/32 exchange-mode=ike2 profile=gcp \
+    local-address=@@ALI_PEERING_IP@@
+
+# my-id=auto, NOT address:@@ALI_PUBLIC_IP@@.
+# The earlier CHR<->pfSense build pinned my-id to this box's public address and
+# worked — but only ever as the IKE INITIATOR. Here both ends are RouterOS and
+# both initiate, so each must also answer as RESPONDER, and a responder cannot
+# match an identity whose my-id is an address that exists on no interface (the
+# EIP is 1:1 NAT). Symptom: `identity not found for responder: ADDR4:<own pub>`
+# then AUTHENTICATION_FAILED, in both directions, with the ID payloads on the
+# wire provably correct. Peer authenticity still rests on the PSK and on
+# `address=@@GCP_PUBLIC_IP@@/32` above, so dropping the explicit ID costs nothing.
+/ip ipsec identity
+add peer=gcp auth-method=pre-shared-key secret="@@IPSEC_PSK@@" \
+    my-id=auto remote-id=ignore
+
+/ip ipsec policy
+add peer=gcp tunnel=yes protocol=gre \
+    src-address=@@ALI_PEERING_IP@@/32 dst-address=@@GCP_PEERING_IP@@/32 \
+    sa-src-address=@@ALI_PEERING_IP@@ sa-dst-address=@@GCP_PUBLIC_IP@@ \
+    proposal=gcp
+
+# No static route to the peer's GRE endpoint is needed, and none belongs here.
+# The default route already covers @@GCP_PEERING_IP@@, and the IPsec policy
+# intercepts the GRE packet on the output path regardless of which route matched
+# — so the packet never leaves in the clear. An earlier draft of this template
+# carried such a /32; it was redundant. The proven CHR<->pfSense config has
+# exactly one static route, the VPC supernet one further down.
+
+# --- GRE ---------------------------------------------------------------------
+# keepalive is DELIBERATELY absent. Both ends are RouterOS here, so GRE
+# keepalives would in principle work — but they add a second liveness mechanism
+# that can declare the link down and take BGP's nexthop with it during a brief
+# IPsec rekey. The BGP hold timer and IPsec DPD already cover liveness.
+#
+# allow-fast-path=no: fast path bypasses processing GRE-over-IPsec needs.
+/interface gre
+add name=gre-gcp local-address=@@ALI_PEERING_IP@@ remote-address=@@GCP_PEERING_IP@@ \
+    mtu=@@TUNNEL_MTU@@ allow-fast-path=no !keepalive
+
+/ip address
+add address=@@ALI_TUNNEL_IP@@/30 interface=gre-gcp network=@@TUNNEL_NETWORK@@
+
+# --- TCP MSS clamping --------------------------------------------------------
+# Clamp to the MEASURED path MTU minus 40, not to the GRE interface MTU.
+# Deriving it from the interface is what black-holes bulk TCP while leaving
+# handshakes and small requests working — a failure that reads like an
+# application bug, not an MTU one.
+#
+# TWO rules: the SYN of a flow and the SYN-ACK of that same flow cross this
+# device on OPPOSITE interfaces, so clamping here covers both directions.
+/ip firewall mangle
+add chain=forward action=change-mss new-mss=@@TUNNEL_MSS@@ passthrough=yes \
+    protocol=tcp tcp-flags=syn out-interface=gre-gcp \
+    comment="clamp tcp mss to the measured path mtu"
+add chain=forward action=change-mss new-mss=@@TUNNEL_MSS@@ passthrough=yes \
+    protocol=tcp tcp-flags=syn in-interface=gre-gcp \
+    comment="clamp tcp mss to the measured path mtu"
+
+# --- VPC supernet route ------------------------------------------------------
+# BGP will not advertise a prefix that is absent from the routing table, and no
+# cloud hands you a connected route for the supernet — only the per-subnet CIDRs.
+# Next-hop is the INTERFACE, not a gateway address, so this line is portable.
+/ip route
+add dst-address=@@ALI_SUPERNET@@ gateway=ether2 distance=1 comment="vpc network"
+
+# --- BGP ---------------------------------------------------------------------
+# The outbound filter is an allow-list. Two things must never leave:
+#   * the tunnel transport /30
+#   * anything covering the peer's public address
+# Advertising either hands the far end a route to this tunnel's own endpoint
+# THROUGH the tunnel. That recursion collapsed the link in the previous project
+# and left the ECS instance stopped.
+#
+# output.network names an ADDRESS-LIST in RouterOS 7. There is no
+# /routing/bgp/network menu as there was in v6 — verified on 7.23.3, where that
+# path is a syntax error.
+/ip firewall address-list
+add list=ali-advertise address=@@ALI_SUPERNET@@ comment="prefix advertised to gcp"
+
+/routing filter rule
+add chain=gcp-out rule="if (dst == @@ALI_SUPERNET@@) { accept } reject"
+add chain=gcp-in  rule="if (dst == 0.0.0.0/0 || dst in @@GCP_PUBLIC_IP@@/32 || dst in @@TUNNEL_NETWORK@@/30) { reject } accept"
+
+# `instance` and `local.role` are both mandatory on /routing/bgp/connection —
+# omitting either fails with "missing value(s) of argument(s)", and an instance
+# must exist by name before the connection can reference it.
+/routing bgp instance
+add name=gcp as=@@ALI_ASN@@ router-id=@@ALI_PEERING_IP@@ disabled=no
+
+# router-id belongs on the instance only — `/routing/bgp/template` rejects it
+# with "bad parameter router-id" (verified on 7.23.3).
+/routing bgp template
+add name=gcp as=@@ALI_ASN@@
+
+/routing bgp connection
+add name=chr-gcp instance=gcp templates=gcp as=@@ALI_ASN@@ \
+    local.address=@@ALI_TUNNEL_IP@@ .role=ebgp \
+    remote.address=@@GCP_TUNNEL_IP@@/32 .as=@@GCP_ASN@@ \
+    input.filter=gcp-in output.filter-chain=gcp-out output.network=ali-advertise \
+    routing-table=main disabled=no
+
+# --- NAT ---------------------------------------------------------------------
+# The private subnet reaches the internet through this device. The
+# `dst-address=!` exclusion is the important part: traffic to the PEER CLOUD
+# must keep its real source address, because the far side routes the reply back
+# by that address. NAT it and the reply is addressed to this router instead of
+# the originating host, and the session dies with no error anywhere obvious.
+#
+# The default `chain=srcnat action=masquerade` rule that ships with the Alibaba
+# CHR image matches EVERYTHING, tunnel traffic included, and must be replaced by
+# this scoped one — apply.sh removes it.
+/ip firewall nat
+add chain=srcnat action=masquerade out-interface=ether1 \
+    src-address=@@ALI_PRIVATE_SUBNET@@ dst-address=!@@GCP_SUPERNET@@ \
+    comment="NAT private subnet to the internet, never to the peer"
+
+/system clock
+set time-zone-name=@@TIMEZONE@@

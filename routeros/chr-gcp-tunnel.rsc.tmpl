@@ -1,0 +1,154 @@
+# MikroTik CHR — GCP end of the Alibaba <-> GCP tunnel
+#
+# Template. Substitute @@PLACEHOLDERS@@ from vars.env (apply.sh does this) and
+# feed the result to the device. `add` lines duplicate on re-run — apply.sh
+# removes the matching objects first. Never commit a rendered copy: it holds
+# the PSK.
+#
+# Assumes ether1 = nic0 on nextops-peering-apse2-subnet (carries the static
+# external IP via 1:1 NAT) and ether2 = nic1 on nextops-prod-apse2-subnet.
+#
+# This is the mirror of chr-ali-tunnel.rsc.tmpl — read the selector rationale
+# there. Summary: both ends are CHR behind 1:1 NAT, so the selectors are
+# private<->private (peering-subnet addresses) and mirror exactly, while
+# sa-dst-address carries the peer's PUBLIC address so NAT-T handles the outer
+# packet.
+#
+# --- What is different on GCP ------------------------------------------------
+# GCP's DHCP hands out /32 addresses on BOTH NICs, and gives ether2 NO gateway
+# at all. Consequences:
+#   * There is no connected route covering either subnet — the routing table has
+#     only 0.0.0.0/0, the peering /28, and two /32s. So the supernet static
+#     route below is not an optimisation, it is the only way BGP has anything to
+#     advertise (`network` advertises nothing for a prefix absent from the RIB).
+#   * The supernet route must point at the INTERFACE (gateway=ether2). There is
+#     no gateway address to aim at, and GCP's fabric answers ARP for on-subnet
+#     destinations.
+
+/ip service
+set ssh port=22
+set winbox port=8291
+set ftp disabled=yes
+set telnet disabled=yes
+set www disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+
+/ip settings
+set ipv4-high-fragment-thresh=16.0MiB
+
+# --- IPsec -------------------------------------------------------------------
+/ip ipsec profile
+add name=ali dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h
+
+# AEAD ONLY — see the matching note in chr-ali-tunnel.rsc.tmpl. aes-256-cbc +
+# sha256 leaves both SAs `mature` while every inbound packet fails the transform
+# (GRE RX=0 both ends, in-state-protocol-errors climbing). aes-256-gcm carries
+# its own integrity, so auth-algorithms MUST be empty.
+/ip ipsec proposal
+add name=ali auth-algorithms="" enc-algorithms=aes-256-gcm \
+    pfs-group=modp2048 lifetime=1h
+
+/ip ipsec peer
+add name=ali address=@@ALI_PUBLIC_IP@@/32 exchange-mode=ike2 profile=ali \
+    local-address=@@GCP_PEERING_IP@@
+
+# my-id=auto — see the matching note in chr-ali-tunnel.rsc.tmpl. A responder
+# cannot match an identity whose my-id is an address that exists on no interface,
+# and with both ends RouterOS both must answer as responder. Peer authenticity
+# rests on the PSK and on `address=@@ALI_PUBLIC_IP@@/32` above.
+/ip ipsec identity
+add peer=ali auth-method=pre-shared-key secret="@@IPSEC_PSK@@" \
+    my-id=auto remote-id=ignore
+
+/ip ipsec policy
+add peer=ali tunnel=yes protocol=gre \
+    src-address=@@GCP_PEERING_IP@@/32 dst-address=@@ALI_PEERING_IP@@/32 \
+    sa-src-address=@@GCP_PEERING_IP@@ sa-dst-address=@@ALI_PUBLIC_IP@@ \
+    proposal=ali
+
+# No static route to the peer's GRE endpoint — the default route already covers
+# @@ALI_PEERING_IP@@ and the IPsec policy intercepts the GRE packet on output.
+# See the matching note in chr-ali-tunnel.rsc.tmpl.
+
+# --- GRE ---------------------------------------------------------------------
+# keepalive deliberately absent; liveness comes from the BGP hold timer and DPD.
+# allow-fast-path=no because fast path bypasses processing GRE-over-IPsec needs.
+/interface gre
+add name=gre-ali local-address=@@GCP_PEERING_IP@@ remote-address=@@ALI_PEERING_IP@@ \
+    mtu=@@TUNNEL_MTU@@ allow-fast-path=no !keepalive
+
+/ip address
+add address=@@GCP_TUNNEL_IP@@/30 interface=gre-ali network=@@TUNNEL_NETWORK@@
+
+# --- TCP MSS clamping --------------------------------------------------------
+# Clamp to the MEASURED path MTU minus 40, never to the GRE interface MTU.
+# Two rules: SYN and SYN-ACK of the same flow cross this device on opposite
+# interfaces.
+/ip firewall mangle
+add chain=forward action=change-mss new-mss=@@TUNNEL_MSS@@ passthrough=yes \
+    protocol=tcp tcp-flags=syn out-interface=gre-ali \
+    comment="clamp tcp mss to the measured path mtu"
+add chain=forward action=change-mss new-mss=@@TUNNEL_MSS@@ passthrough=yes \
+    protocol=tcp tcp-flags=syn in-interface=gre-ali \
+    comment="clamp tcp mss to the measured path mtu"
+
+# --- VPC supernet route ------------------------------------------------------
+# See the header note: on GCP this is mandatory, not merely portable practice.
+/ip route
+add dst-address=@@GCP_SUPERNET@@ gateway=ether2 distance=1 comment="vpc network"
+
+# --- BGP ---------------------------------------------------------------------
+# Outbound is an allow-list; the tunnel /30 and anything covering the peer's
+# public address must never leave, or the far end learns a route to this
+# tunnel's own endpoint through the tunnel and the link collapses.
+#
+# output.network names an ADDRESS-LIST in RouterOS 7 (there is no
+# /routing/bgp/network menu as in v6) — hence the address-list below.
+/ip firewall address-list
+add list=gcp-advertise address=@@GCP_SUPERNET@@ comment="prefix advertised to alibaba"
+
+/routing filter rule
+add chain=ali-out rule="if (dst == @@GCP_SUPERNET@@) { accept } reject"
+add chain=ali-in  rule="if (dst == 0.0.0.0/0 || dst in @@ALI_PUBLIC_IP@@/32 || dst in @@TUNNEL_NETWORK@@/30) { reject } accept"
+
+/routing bgp instance
+add name=ali as=@@GCP_ASN@@ router-id=@@GCP_PEERING_IP@@ disabled=no
+
+# router-id belongs on the instance only — `/routing/bgp/template` rejects it
+# with "bad parameter router-id" (verified on 7.23.3).
+/routing bgp template
+add name=ali as=@@GCP_ASN@@
+
+/routing bgp connection
+add name=chr-ali instance=ali templates=ali as=@@GCP_ASN@@ \
+    local.address=@@GCP_TUNNEL_IP@@ .role=ebgp \
+    remote.address=@@ALI_TUNNEL_IP@@/32 .as=@@ALI_ASN@@ \
+    input.filter=ali-in output.filter-chain=ali-out output.network=gcp-advertise \
+    routing-table=main disabled=no
+
+# --- NAT ---------------------------------------------------------------------
+# Mirrors the Alibaba side: this CHR is the internet path for the workload
+# subnet, so that subnet needs source NAT on the way out.
+#
+# The `dst-address=!` exclusion is the load-bearing part. Traffic to the PEER
+# CLOUD must keep its real source address, because the far side routes the reply
+# back by that address. NAT it and the reply is addressed to this router instead
+# of the originating host, and LAN-to-LAN dies while tunnel-address pings keep
+# working — the exact symptom the pfSense project chased for an afternoon
+# (Automatic Outbound NAT there covered the tunnel interface too).
+#
+# Verified after adding this rule: private-to-private ping still runs 6/6 at 0%
+# loss in both directions, so the exclusion is doing its job.
+#
+# Note this box is NOT yet on any GCP egress path: nextops-default-route targets
+# the bastion NAT and matches tags bastion/app/database/observability, none of
+# which are on this instance. The rule is correct and inert until a route or tag
+# actually sends workload traffic here.
+/ip firewall nat
+add chain=srcnat action=masquerade out-interface=ether1 \
+    src-address=@@GCP_SUPERNET@@ dst-address=!@@ALI_SUPERNET@@ \
+    comment="NAT private subnet to the internet, never to the peer"
+
+/system clock
+set time-zone-name=@@TIMEZONE@@
