@@ -11,14 +11,14 @@
 /ip ipsec profile add name=gcp-ikev2-profile dh-group=modp2048,ecp256 enc-algorithm=aes-256 hash-algorithm=sha256 prf-algorithm=sha256 lifetime=1d nat-traversal=yes
 /ip ipsec proposal add name=gcp-ipsec-prop auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=8h pfs-group=modp2048
 
-# 3. IPsec Peer (Connect to GCP CHR Static Public IP)
-/ip ipsec peer add name=peer-gcp-chr address=GCP_CHR_PUBLIC_IP/32 profile=gcp-ikev2-profile exchange-mode=ike2
+# 3. IPsec Peer (Connect to GCP CHR Static Public IP: 34.101.118.166)
+/ip ipsec peer add name=peer-gcp-chr address=34.101.118.166/32 profile=gcp-ikev2-profile exchange-mode=ike2
 
 # 4. IPsec Identity (Pre-Shared Key)
 /ip ipsec identity add peer=peer-gcp-chr auth-method=pre-shared-key secret="YOUR_STRONG_PRESHARED_KEY"
 
 # 5. IPIP / GRE Tunnel Interface over IPsec
-/interface ipip add name=ipip-to-gcp local-address=10.151.127.250 remote-address=GCP_CHR_PRIVATE_OR_PUBLIC_IP ipsec-secret="YOUR_STRONG_PRESHARED_KEY" allow-fast-path=no comment="Tunnel to GCP CHR"
+/interface ipip add name=ipip-to-gcp local-address=10.151.127.250 remote-address=34.101.118.166 ipsec-secret="YOUR_STRONG_PRESHARED_KEY" allow-fast-path=no comment="Tunnel to GCP CHR"
 /ip address add address=10.254.254.1/30 interface=ipip-to-gcp network=10.254.254.0
 
 # 6. BGP Configuration (RouterOS v7)
@@ -30,5 +30,5 @@
 # Masquerade outbound internet traffic for spoke VPCs
 /ip firewall nat add chain=srcnat out-interface=ether1-peering-wan action=masquerade comment="NAT Egress Internet"
 
-# Bypass NAT for cross-cloud traffic to GCP (10.160.0.0/16)
-/ip firewall nat add chain=srcnat dst-address=10.160.0.0/16 action=accept place-before=0 comment="Do NOT NAT traffic to GCP"
+# Bypass NAT for cross-cloud traffic to GCP (10.101.0.0/16)
+/ip firewall nat add chain=srcnat dst-address=10.101.0.0/16 action=accept place-before=0 comment="Do NOT NAT traffic to GCP"

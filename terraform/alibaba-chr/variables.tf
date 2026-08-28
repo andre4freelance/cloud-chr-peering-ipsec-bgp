@@ -88,6 +88,12 @@ variable "admin_ip_cidr" {
   default     = "103.94.10.189/32"
 }
 
+variable "gcp_chr_public_ip" {
+  description = "GCP CHR Static Public IP for IPsec peering"
+  type        = string
+  default     = "34.101.118.166"
+}
+
 variable "ssh_port" {
   description = "Port number for SSH"
   type        = number

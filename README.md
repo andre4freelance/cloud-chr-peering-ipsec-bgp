@@ -18,6 +18,7 @@ This repository contains the Terraform infrastructure code and MikroTik RouterOS
 |                          |  (EIP: 8.215.24.90)         (Private Subnet 5a)    |        |
 |                          |           \                         /              |        |
 |                          |       [MikroTik CHR: chr-peering (ASN 65534)]      |        |
+|                          +-----------------------------------------------------+        |
 +--------------------------+-----------------------------------------------------+--------+
                                                      |
                                    Route-based IPsec (IKEv2)
@@ -31,11 +32,11 @@ This repository contains the Terraform infrastructure code and MikroTik RouterOS
 |                          |      [MikroTik CHR: gcp-chr-peering (ASN 65535)]    |        |
 |                          |           /                         \              |        |
 |                          |  Primary NIC (nic0)         Secondary NIC (nic1)   |        |
-|                          |  10.160.0.10                10.160.10.100          |        |
-|                          |  (Static External IP)       (Workload Subnet)      |        |
+|                          |  10.101.16.10               10.101.0.10            |        |
+|                          |  (Static IP: 34.101.118.166)(Production Subnet)    |        |
 |                          +--------------------------+--------------------------+        |
 |                                                     |                                   |
-|                                         [GCP VPC: 10.160.0.0/16]                        |
+|                                [GCP Shared VPC: 10.101.0.0/16]                          |
 +-----------------------------------------------------------------------------------------+
 ```
 
@@ -48,9 +49,9 @@ This repository contains the Terraform infrastructure code and MikroTik RouterOS
 | **Alibaba CHR Primary** | Alibaba Cloud | `10.151.127.240/28` | `10.151.127.250` | Primary interface attached to Static EIP (`8.215.24.90`) |
 | **Alibaba CHR Private** | Alibaba Cloud | `10.151.74.0/24` | `10.151.74.100` | Secondary ENI attached to private subnet |
 | **Alibaba Workload VPC** | Alibaba Cloud | `10.151.64.0/18` | — | Internal VPC CIDR |
-| **GCP CHR Primary** | Google Cloud | `10.160.0.0/28` | `10.160.0.10` | Primary NIC attached to Static Public IP |
-| **GCP CHR Private** | Google Cloud | `10.160.10.0/24` | `10.160.10.100` | Secondary NIC attached to private workload subnet |
-| **GCP Workload VPC** | Google Cloud | `10.160.0.0/16` | — | Internal GCP VPC CIDR |
+| **GCP CHR Primary** | Google Cloud | `10.101.16.0/28` | `10.101.16.10` | Primary NIC attached to Static Public IP (`34.101.118.166`) |
+| **GCP CHR Private** | Google Cloud | `10.101.0.0/22` | `10.101.0.10` | Secondary NIC attached to production workload subnet |
+| **GCP Shared VPC** | Google Cloud | `10.101.0.0/16` | — | Internal GCP Shared VPC Supernet |
 | **Tunnel PTP Subnet** | Virtual (IPIP) | `10.254.254.0/30` | `.1` (Ali) / `.2` (GCP) | Point-to-point transit subnet for BGP peering |
 
 ---
@@ -87,5 +88,6 @@ terraform apply
 ---
 
 ## 🔒 Security Best Practices
-- Management access (SSH port `22` and Winbox port `8291`) is restricted strictly to the administrator IP.
-- Pre-shared keys (PSK) and credentials are saved in environment variables (`vars.env`) and excluded from Git commits.
+- Management access (SSH port `22` and Winbox port `8291`) is restricted strictly to administrator IPs.
+- IPsec (UDP 500, 4500) and GRE/Tunnel traffic is restricted strictly between the two public IPs (`8.215.24.90` and `34.101.118.166`).
+- Pre-shared keys (PSK) and credentials are excluded from Git commits.

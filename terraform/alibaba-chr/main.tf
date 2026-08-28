@@ -46,6 +46,45 @@ resource "alicloud_security_group_rule" "peering_ingress_winbox" {
   description       = "Winbox management from Admin IP"
 }
 
+# Allow IPsec IKEv2 (UDP 500) from GCP CHR Public IP
+resource "alicloud_security_group_rule" "peering_ingress_ipsec_ike" {
+  type              = "ingress"
+  ip_protocol       = "udp"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "500/500"
+  security_group_id = alicloud_security_group.peering_sg.id
+  cidr_ip           = "${var.gcp_chr_public_ip}/32"
+  description       = "IPsec IKEv2 UDP 500 from GCP CHR Public IP"
+}
+
+# Allow IPsec NAT-Traversal (UDP 4500) from GCP CHR Public IP
+resource "alicloud_security_group_rule" "peering_ingress_ipsec_natt" {
+  type              = "ingress"
+  ip_protocol       = "udp"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "4500/4500"
+  security_group_id = alicloud_security_group.peering_sg.id
+  cidr_ip           = "${var.gcp_chr_public_ip}/32"
+  description       = "IPsec NAT-T UDP 4500 from GCP CHR Public IP"
+}
+
+# Allow GRE Protocol from GCP CHR Public IP
+resource "alicloud_security_group_rule" "peering_ingress_gre" {
+  type              = "ingress"
+  ip_protocol       = "gre"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "-1/-1"
+  security_group_id = alicloud_security_group.peering_sg.id
+  cidr_ip           = "${var.gcp_chr_public_ip}/32"
+  description       = "GRE Tunnel from GCP CHR Public IP"
+}
+
 # Security Group 2: Dedicated for Secondary Interface (Private Subnet)
 resource "alicloud_security_group" "private_sg" {
   security_group_name = "${var.instance_name}-private-sg"
@@ -75,6 +114,19 @@ resource "alicloud_security_group_rule" "private_ingress_internal_vpc" {
   security_group_id = alicloud_security_group.private_sg.id
   cidr_ip           = "10.151.64.0/18"
   description       = "Allow internal VPC traffic on private ENI"
+}
+
+# Allow GCP VPC traffic on the private interface (forwarded via CHR)
+resource "alicloud_security_group_rule" "private_ingress_gcp_vpc" {
+  type              = "ingress"
+  ip_protocol       = "all"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "-1/-1"
+  security_group_id = alicloud_security_group.private_sg.id
+  cidr_ip           = "10.101.0.0/16"
+  description       = "Allow GCP Shared VPC traffic on private ENI"
 }
 
 ##############################################################################
