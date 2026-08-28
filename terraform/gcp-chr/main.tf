@@ -62,16 +62,20 @@ resource "google_compute_firewall" "nic0_allow_mgmt" {
   target_tags   = ["gcp-chr-peering-nic0"]
 }
 
-# Allow IPsec IKEv2 (UDP 500) and NAT-T (UDP 4500) from Alibaba CHR Public EIP
+# Allow IPsec IKEv2 (UDP 500), NAT-T (UDP 4500), and GRE (47) from Alibaba CHR Public EIP
 resource "google_compute_firewall" "nic0_allow_ipsec" {
   name        = "${var.instance_name}-nic0-allow-ipsec"
   network     = data.google_compute_network.vpc.name
   project     = var.project_id
-  description = "Dedicated nic0: Allow IPsec and NAT-T from Alibaba CHR EIP"
+  description = "Dedicated nic0: Allow IPsec, NAT-T, and GRE from Alibaba CHR EIP"
 
   allow {
     protocol = "udp"
     ports    = ["500", "4500"]
+  }
+
+  allow {
+    protocol = "47"
   }
 
   source_ranges = ["${var.alibaba_chr_public_ip}/32"]
