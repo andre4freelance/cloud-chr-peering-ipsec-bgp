@@ -203,6 +203,73 @@ bastion NAT and matches tags `bastion,app,database,observability`, none of which
 are on this instance. Correct and waiting for a route or tag to send workload
 traffic here.
 
+## 9. ~1 Mbit/s TX with unlimited RX: the licence is stale until a reboot
+
+Symptom, after the tunnel was fully working:
+
+```
+Ali -> GCP   sender 100.5 Mbps   receiver (GCP ether1 RX) ~107 Mbps   OK
+GCP -> Ali   sender   1.26 Mbps  receiver (Ali ether1 RX)  ~1.0 Mbps  BROKEN
+```
+
+Sender and receiver **agree** at ~1 Mbps and `in-state-protocol-errors` is 0 at
+both ends, so nothing is lost or failing to decrypt — the sender simply never
+puts more on the wire. One box decrypts at 100 Mbps and encrypts at 0.9 Mbps.
+
+`~1 Mbit/s on TX with RX unrestricted is the exact signature of an unlicensed
+CHR` — the free-tier limit applies per interface on transmit only. Both boxes
+report `level: p-unlimited`, so the licence looks fine. The tell is one field:
+
+```
+chr-ali   next-renewal-at: 2099-12-02 07:00:00     TX = 100 Mbps
+chr-gcp   next-renewal-at: <empty>                 TX = 1.26 Mbps
+```
+
+`/system/license/print` shows the **stored** level, not the one being enforced.
+On this GCP CHR — built from a custom imported image — the licence had not been
+read into the running system. **A reboot fixes it**, and `next-renewal-at` is
+populated afterwards, matching the working peer:
+
+```
+GCP -> Ali  UDP  0.9 -> 93.0 Mbps
+GCP -> Ali  TCP  0.9 -> 94.2 Mbps     (Ali ether1 RX confirms ~94 Mbps, 0 errors)
+Ali -> GCP  TCP        98.9 Mbps
+both directions at once  tx 90.2 / rx 94.8 Mbps
+```
+
+The tunnel, SAs and BGP all come back on their own after the reboot — no
+reconfiguration needed.
+
+**What this cost, and how to skip it:** every plausible in-band cause was
+measured and eliminated first — per-core CPU (max 6% on one core under the
+failing load), MTU (1300 did not help; 1472 DF passes inside the GCP VPC),
+cipher (`aes-128-gcm` identical), packet size (600-byte identical), TCP vs UDP,
+congestion ramp (`local-tx-speed=10M` still 0.9), queues (none), conntrack
+flush, and the btest-generator confound (an SFTP transfer with no generator gave
+the same 0.94 Mbps). The single most useful reading was `/tool/profile` showing
+**total 0%** while the box "sent" 1.26 Mbps: an idle router that will not fill
+the wire is rate-limiting itself, which points at licensing rather than load.
+
+Check `next-renewal-at` on both peers before chasing anything else, especially
+on a CHR built from an imported image.
+
+### Measurement hazards that produced two false conclusions
+
+Both were errors in method, not in the network, and both wasted a diagnostic
+round:
+
+- **`\$VAR` inside a double-quoted RouterOS command sent over SSH** reaches the
+  device as a literal `$VAR` — an undefined RouterOS variable, so the password
+  is empty, auth fails, and btest reports `0bps`. That is not a throughput
+  figure. Write the script to a temp file with the value already substituted by
+  the shell, or use single quotes.
+- **Deleting the btest user from one end** and only recreating it on the other
+  makes every test aimed at the deleted side report `0bps` for the same reason.
+
+Both produced "evidence" of decrypt failures (`in-state-protocol-errors` deltas
+of 306 and 857) that vanished under valid load. **Always confirm throughput at
+the receiver's own interface counters**, not just the sender's report.
+
 ## Still open
 
 **GCP has no route to the Alibaba supernet.** `gcloud compute routes list

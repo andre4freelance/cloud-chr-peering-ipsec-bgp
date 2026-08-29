@@ -35,6 +35,7 @@ render() {
       -e "s|@@GCP_PUBLIC_IP@@|$GCP_PUBLIC_IP|g" \
       -e "s|@@GCP_PEERING_IP@@|$GCP_PEERING_IP|g" \
       -e "s|@@GCP_PRIVATE_IP@@|$GCP_PRIVATE_IP|g" \
+      -e "s|@@GCP_PRIVATE_SUBNET@@|$GCP_PRIVATE_SUBNET|g" \
       -e "s|@@GCP_ASN@@|$GCP_ASN|g" \
       -e "s|@@GCP_SUPERNET@@|$GCP_SUPERNET|g" \
       -e "s|@@GCP_TUNNEL_IP@@|$GCP_TUNNEL_IP|g" \

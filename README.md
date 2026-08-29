@@ -64,6 +64,12 @@ Widen the prefix on both sides if that changes.
 **Tunnel MTU 1400 / MSS 1360** — measured, not assumed. Across the live tunnel a
 1410-byte `do-not-fragment` ping is lost and 1400 passes.
 
+**Throughput:** ~94-99 Mbps each way, ~90/95 Mbps with both directions saturated
+at once, against the 100 Mbps cap on the Alibaba EIP. If one direction sits at
+roughly 1 Mbps while the other runs at line rate, check `next-renewal-at` in
+`/system/license/print` on both CHRs before anything else — see
+[docs/lessons.md](docs/lessons.md) §9.
+
 ---
 
 ## 🚀 Deployment Guide

@@ -145,9 +145,15 @@ add name=chr-ali instance=ali templates=ali as=@@GCP_ASN@@ \
 # the bastion NAT and matches tags bastion/app/database/observability, none of
 # which are on this instance. The rule is correct and inert until a route or tag
 # actually sends workload traffic here.
+# src-address is the WORKLOAD SUBNET, not the supernet. @@GCP_SUPERNET@@ contains
+# this router's own ether1 address (@@GCP_PEERING_IP@@), so scoping the rule to the
+# supernet also masquerades the CHR's own egress — including its outbound ESP.
+# The Alibaba side is naturally immune (its ether1 sits outside its private /24),
+# which made the two ends asymmetric until this was caught by comparing the NAT
+# rules side by side.
 /ip firewall nat
 add chain=srcnat action=masquerade out-interface=ether1 \
-    src-address=@@GCP_SUPERNET@@ dst-address=!@@ALI_SUPERNET@@ \
+    src-address=@@GCP_PRIVATE_SUBNET@@ dst-address=!@@ALI_SUPERNET@@ \
     comment="NAT private subnet to the internet, never to the peer"
 
 /system clock
