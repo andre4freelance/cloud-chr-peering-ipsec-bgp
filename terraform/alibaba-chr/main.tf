@@ -147,7 +147,11 @@ resource "alicloud_instance" "chr" {
   system_disk_size     = var.system_disk_size
   private_ip           = var.peering_private_ip
 
+  # Strictly zero public bandwidth directly on instance (uses EIP)
   internet_max_bandwidth_out = 0
+
+  # Disable Source/Destination Check for NVA / NAT router function on primary interface
+  source_dest_check = false
 
   lifecycle {
     ignore_changes = [password, image_id]
