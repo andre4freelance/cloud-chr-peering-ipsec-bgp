@@ -270,6 +270,31 @@ Both produced "evidence" of decrypt failures (`in-state-protocol-errors` deltas
 of 306 and 857) that vanished under valid load. **Always confirm throughput at
 the receiver's own interface counters**, not just the sender's report.
 
+## 10. Alibaba ENIs drop forwarded packets until SourceDestCheck is off
+
+Alibaba Cloud ENIs ship with `SourceDestCheck=true`, and the hypervisor drops any
+packet whose source IP is not the ENI's own. A CHR acting as NAT gateway / router
+/ NVA forwards packets sourced from private hosts, so every one of them is
+discarded before it leaves — with nothing logged on the instance.
+
+Disable it on **both** CHR ENIs. In Terraform, `source_dest_check = false` on
+`alicloud_instance` (provider `v1.284.0+`).
+
+GCP's equivalent is `can_ip_forward = true`, which was already set on the GCP CHR
+from the start — the asymmetry is easy to miss because only one cloud makes you
+ask for it under a name you would search for.
+
+## 11. GRE in the firewall rules is symmetry, not a requirement
+
+Both clouds whitelist GRE (protocol 47) between the two public addresses. It is
+harmless and it documents intent, but it carries no traffic in this design: GRE is
+the **inner** protocol, encapsulated inside ESP, and ESP itself rides UDP 4500
+because both ends are behind 1:1 NAT. No bare GRE packet ever reaches the wire.
+
+Worth stating plainly so nobody adds it expecting to fix a broken tunnel, or
+removes it expecting to break a working one. The rules that actually matter are
+UDP 500 and UDP 4500.
+
 ## Still open
 
 **GCP has no route to the Alibaba supernet.** `gcloud compute routes list
