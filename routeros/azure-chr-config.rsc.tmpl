@@ -1,0 +1,40 @@
+# RouterOS v7 configuration template for Azure MikroTik CHR ("chr-peering")
+# Dual-NIC Cloud-Native NVA on Microsoft Azure (indonesiacentral)
+
+/interface/gre/add allow-fast-path=no !keepalive local-address=__AZURE_PEERING_IP__ mtu=__TUNNEL_MTU__ name=gre-gcp remote-address=__GCP_PEERING_IP__
+
+/ip/ipsec/profile/add dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h name=gcp
+
+/ip/ipsec/peer/add address=__GCP_PUBLIC_IP__/32 exchange-mode=ike2 local-address=__AZURE_PEERING_IP__ name=gcp profile=gcp
+
+/ip/ipsec/proposal/add auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h name=gcp pfs-group=modp2048
+
+/ip/ipsec/identity/add peer=gcp remote-id=ignore secret="__IPSEC_PSK_AZURE_GCP__"
+
+/ip/ipsec/policy/add dst-address=__GCP_PEERING_IP__/32 peer=gcp proposal=gcp protocol=gre src-address=__AZURE_PEERING_IP__/32 tunnel=yes
+
+/ip/address/add address=__AZURE_GCP_TUNNEL_AZURE_IP__/30 interface=gre-gcp network=__AZURE_GCP_TUNNEL_NETWORK__
+
+/ip/firewall/address-list/add address=__AZURE_SUPERNET__ comment="prefix advertised to peers" list=azure-advertise
+/ip/firewall/address-list/add address=__GCP_SUPERNET__ comment=gcp list=cloud
+/ip/firewall/address-list/add address=__ALI_SUPERNET__ comment=aliyun list=cloud
+
+/ip/firewall/mangle/add action=change-mss chain=forward comment="clamp tcp mss to the measured path mtu" new-mss=__TUNNEL_MSS__ out-interface=gre-gcp protocol=tcp tcp-flags=syn
+/ip/firewall/mangle/add action=change-mss chain=forward comment="clamp tcp mss to the measured path mtu" in-interface=gre-gcp new-mss=__TUNNEL_MSS__ protocol=tcp tcp-flags=syn
+
+/ip/firewall/nat/add action=masquerade chain=srcnat comment="NAT private subnet to the internet, never to the peer" dst-address-list=!cloud out-interface=ether1
+
+/ip/service/set ftp disabled=yes
+/ip/service/set telnet disabled=yes
+/ip/service/set www disabled=yes
+/ip/service/set api disabled=yes
+/ip/service/set api-ssl disabled=yes
+
+/routing/bgp/instance/add as=__AZURE_ASN__ disabled=no name=azure router-id=__AZURE_PEERING_IP__
+
+/routing/bgp/template/add as=__AZURE_ASN__ name=azure
+
+/routing/filter/rule/add chain=gcp-out rule="if (dst == __AZURE_SUPERNET__) { accept } reject"
+/routing/filter/rule/add chain=gcp-in rule="if (dst == 0.0.0.0/0 || dst in __GCP_PUBLIC_IP__/32 || dst in __AZURE_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __GCP_SUPERNET__ || dst in __ALI_SUPERNET__) { accept } reject }"
+
+/routing/bgp/connection/add as=__AZURE_ASN__ disabled=no input.filter=gcp-in instance=azure local.address=__AZURE_GCP_TUNNEL_AZURE_IP__ .role=ebgp name=chr-gcp output.filter-chain=gcp-out .network=azure-advertise remote.address=__AZURE_GCP_TUNNEL_GCP_IP__/32 .as=__GCP_ASN__ routing-table=main templates=azure
