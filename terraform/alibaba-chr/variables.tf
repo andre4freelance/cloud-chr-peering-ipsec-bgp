@@ -106,6 +106,18 @@ variable "winbox_port" {
   default     = 8291
 }
 
+variable "azure_vnet_cidr" {
+  description = "Azure VNet CIDR block"
+  type        = string
+  default     = "10.126.0.0/18"
+}
+
+variable "spoke_vpc_cidr" {
+  description = "Spoke Production VPC nextops-vpc CIDR block"
+  type        = string
+  default     = "10.151.0.0/18"
+}
+
 variable "eip_bandwidth" {
   description = "Peak bandwidth limit in Mbps for EIP (PayByTraffic)"
   type        = string

@@ -1,6 +1,6 @@
 ##############################################################################
 # GCP MikroTik CHR Dual-NIC Deployment
-# Model: Multi-Cloud Interconnect Mesh (Alibaba Cloud <-> GCP <-> Azure)
+# Model: Hub-and-Spoke Interconnect (Alibaba Cloud <-> GCP)
 ##############################################################################
 
 # Reference to existing Shared VPC and Subnets in nextops-host
@@ -23,11 +23,16 @@ data "google_compute_subnetwork" "workload_subnet" {
 
 # 1. Static Regional Public IP for Primary Interface (nic0)
 resource "google_compute_address" "chr_static_ip" {
-  name        = var.static_ip_name
-  region      = var.region
-  project     = var.project_id
+  name    = var.static_ip_name
+  region  = var.region
+  project = var.project_id
+  # Verbatim from the live resource. On google_compute_address, `description` is
+  # ForceNew — editing this string alone is enough to destroy the reservation and
+  # hand back a different IP. Do not "clean up" this wording.
   description = "Dedicated Static Public IP for gcp-chr-peering primary peering interface"
 
+  # The peer address on the Alibaba side points at this exact IP. Never let a
+  # rename of the instance cascade into replacing this address.
   lifecycle {
     prevent_destroy = true
   }
@@ -57,12 +62,12 @@ resource "google_compute_firewall" "nic0_allow_mgmt" {
   target_tags   = ["gcp-chr-peering-nic0"]
 }
 
-# Allow IPsec IKEv2 (UDP 500), NAT-T (UDP 4500), and GRE (47) from Alibaba & Azure CHR Public IPs
+# Allow IPsec IKEv2 (UDP 500), NAT-T (UDP 4500), and GRE (47) from Alibaba CHR Public EIP
 resource "google_compute_firewall" "nic0_allow_ipsec" {
   name        = "${var.instance_name}-nic0-allow-ipsec"
   network     = data.google_compute_network.vpc.name
   project     = var.project_id
-  description = "Dedicated nic0: Allow IPsec, NAT-T, and GRE from Alibaba and Azure CHR Public IPs"
+  description = "Dedicated nic0: Allow IPsec, NAT-T, and GRE from Alibaba CHR EIP"
 
   allow {
     protocol = "udp"
@@ -73,16 +78,13 @@ resource "google_compute_firewall" "nic0_allow_ipsec" {
     protocol = "47"
   }
 
-  source_ranges = [
-    "${var.alibaba_chr_public_ip}/32",
-    "${var.azure_chr_public_ip}/32"
-  ]
-  target_tags = ["gcp-chr-peering-nic0"]
+  source_ranges = ["${var.alibaba_chr_public_ip}/32"]
+  target_tags   = ["gcp-chr-peering-nic0"]
 }
 
 # --- Dedicated Firewall for Interface 2 (nic1: Workload / Internal VPC) ---
 
-# Allow all internal VPC traffic, Alibaba Cloud VPC, and Azure VNet traffic on private interface
+# Allow all internal VPC traffic and multi-cloud traffic on private interface
 resource "google_compute_firewall" "nic1_allow_internal_vpc" {
   name        = "${var.instance_name}-nic1-allow-internal-vpc"
   network     = data.google_compute_network.vpc.name
@@ -94,9 +96,10 @@ resource "google_compute_firewall" "nic1_allow_internal_vpc" {
   }
 
   source_ranges = [
-    "10.101.0.0/16",      # Entire GCP Shared VPC Supernet
-    var.alibaba_vpc_cidr, # Alibaba Cloud VPC Subnet (10.151.64.0/18)
-    var.azure_vnet_cidr   # Azure VNet Subnet (10.126.0.0/18)
+    "10.101.0.0/16",          # Entire GCP Shared VPC Supernet
+    var.alibaba_vpc_cidr,      # Alibaba Cloud Hub VPC (10.151.64.0/18)
+    var.alibaba_spoke_vpc_cidr,# Alibaba Cloud Spoke VPC (10.151.0.0/18)
+    var.azure_vnet_cidr        # Azure VNet Supernet (10.126.0.0/18)
   ]
   target_tags = ["gcp-chr-workload-nic1"]
 }
@@ -110,7 +113,7 @@ resource "google_compute_instance" "chr" {
   machine_type = var.machine_type
   zone         = var.zone
   project      = var.project_id
-  description  = "MikroTik CHR Router for Multi-Cloud Hybrid Interconnect"
+  description  = "MikroTik CHR Router for Multi-Cloud Hybrid Interconnect with Alibaba Cloud"
 
   can_ip_forward = true
 

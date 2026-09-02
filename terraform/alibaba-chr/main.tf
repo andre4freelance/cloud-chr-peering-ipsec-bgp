@@ -129,6 +129,32 @@ resource "alicloud_security_group_rule" "private_ingress_gcp_vpc" {
   description       = "Allow GCP Shared VPC traffic on private ENI"
 }
 
+# Allow Azure VNet traffic on the private interface
+resource "alicloud_security_group_rule" "private_ingress_azure_vnet" {
+  type              = "ingress"
+  ip_protocol       = "all"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "-1/-1"
+  security_group_id = alicloud_security_group.private_sg.id
+  cidr_ip           = var.azure_vnet_cidr
+  description       = "Allow Azure VNet traffic on private ENI"
+}
+
+# Allow Spoke VPC (nextops-vpc) traffic on the private interface
+resource "alicloud_security_group_rule" "private_ingress_spoke_vpc" {
+  type              = "ingress"
+  ip_protocol       = "all"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "-1/-1"
+  security_group_id = alicloud_security_group.private_sg.id
+  cidr_ip           = var.spoke_vpc_cidr
+  description       = "Allow Spoke VPC nextops-vpc traffic on private ENI"
+}
+
 ##############################################################################
 # Compute Instance: MikroTik CHR
 ##############################################################################
