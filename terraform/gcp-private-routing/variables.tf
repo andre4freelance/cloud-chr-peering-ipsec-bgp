@@ -30,8 +30,14 @@ variable "chr_workload_nic_ip" {
 
 variable "aliyun_vpc_cidr" {
   type        = string
-  description = "Alibaba Cloud VPC Supernet CIDR"
+  description = "Alibaba Cloud VPC Supernet CIDR (Hub managedservice-vpc)"
   default     = "10.151.64.0/18"
+}
+
+variable "aliyun_spoke_vpc_cidr" {
+  type        = string
+  description = "Alibaba Cloud Spoke VPC CIDR (Production nextops-vpc)"
+  default     = "10.151.0.0/18"
 }
 
 variable "azure_vnet_cidr" {

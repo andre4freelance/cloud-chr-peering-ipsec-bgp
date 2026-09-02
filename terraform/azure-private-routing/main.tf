@@ -26,6 +26,15 @@ resource "azurerm_route" "private_to_aliyun" {
   next_hop_in_ip_address = var.chr_private_ip
 }
 
+resource "azurerm_route" "private_to_aliyun_spoke" {
+  name                   = "to-aliyun-spoke-via-chr"
+  resource_group_name    = var.network_resource_group_name
+  route_table_name       = "rt-nextops-private"
+  address_prefix         = var.aliyun_spoke_vpc_cidr
+  next_hop_type          = "VirtualAppliance"
+  next_hop_in_ip_address = var.chr_private_ip
+}
+
 resource "azurerm_route" "private_to_gcp" {
   name                   = "to-gcp-via-chr"
   resource_group_name    = var.network_resource_group_name
@@ -49,6 +58,13 @@ resource "azurerm_route_table" "public_rt" {
   route {
     name                   = "to-aliyun-via-chr"
     address_prefix         = var.aliyun_vpc_cidr
+    next_hop_type          = "VirtualAppliance"
+    next_hop_in_ip_address = var.chr_private_ip
+  }
+
+  route {
+    name                   = "to-aliyun-spoke-via-chr"
+    address_prefix         = var.aliyun_spoke_vpc_cidr
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.chr_private_ip
   }

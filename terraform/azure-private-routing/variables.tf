@@ -30,12 +30,18 @@ variable "chr_private_ip" {
 
 variable "aliyun_vpc_cidr" {
   type        = string
-  description = "Alibaba Cloud VPC Supernet CIDR"
+  description = "Alibaba Cloud VPC Supernet CIDR (Hub managedservice-vpc)"
   default     = "10.151.64.0/18"
+}
+
+variable "aliyun_spoke_vpc_cidr" {
+  type        = string
+  description = "Alibaba Cloud Spoke VPC CIDR (Production nextops-vpc)"
+  default     = "10.151.0.0/18"
 }
 
 variable "gcp_vpc_cidr" {
   type        = string
   description = "GCP VPC Supernet CIDR"
-  default     = "10.101.0.0/18"
+  default     = "10.101.0.0/16"
 }

@@ -21,6 +21,16 @@ resource "google_compute_route" "route_to_aliyun" {
   description = "Route to Alibaba Cloud VPC via MikroTik CHR private interface (nic1)"
 }
 
+resource "google_compute_route" "route_to_aliyun_spoke" {
+  name        = "rt-nextops-to-aliyun-spoke-via-chr"
+  dest_range  = var.aliyun_spoke_vpc_cidr
+  network     = data.google_compute_network.vpc.name
+  project     = var.project_id
+  next_hop_ip = var.chr_workload_nic_ip
+  priority    = var.route_priority
+  description = "Route to Alibaba Cloud Spoke VPC (nextops-vpc) via MikroTik CHR private interface (nic1)"
+}
+
 resource "google_compute_route" "route_to_azure" {
   name        = "rt-nextops-to-azure-via-chr"
   dest_range  = var.azure_vnet_cidr

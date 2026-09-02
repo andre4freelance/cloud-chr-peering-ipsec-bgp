@@ -48,7 +48,7 @@ variable "public_route_table_name" {
 
 variable "gcp_vpc_cidr" {
   type        = string
-  default     = "10.101.0.0/18"
+  default     = "10.101.0.0/16"
   description = "CIDR block of Google Cloud Platform (GCP) VPC"
 }
 
