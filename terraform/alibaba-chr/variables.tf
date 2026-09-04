@@ -17,27 +17,27 @@ variable "zone_id" {
 }
 
 variable "resource_group_id" {
-  description = "Resource Group ID"
+  description = "Resource Group ID (ics-nextops-production)"
   type        = string
-  default     = "rg-aek3jxlnulgvj3i"
+  default     = "rg-aek46fmc2ohclmi"
 }
 
 variable "vpc_id" {
-  description = "VPC ID where the instance resides"
+  description = "VPC ID where the instance resides (nextops-vpc)"
   type        = string
-  default     = "vpc-k1ap3ij7ik4wgypdc1s5g"
+  default     = "vpc-k1anthliklw7pupgd2bx9"
 }
 
 variable "peering_vswitch_id" {
-  description = "vSwitch ID for Primary Interface (Peering subnet)"
+  description = "vSwitch ID for Primary Interface (nextops-peering-ap-southeast-5a)"
   type        = string
-  default     = "vsw-k1agelkxe91ul5aj95i9p"
+  default     = "vsw-k1afomhba66scoo5yhini"
 }
 
 variable "private_vswitch_id" {
-  description = "vSwitch ID for Secondary Interface (Private subnet 5a)"
+  description = "vSwitch ID for Secondary Interface (nextops-private-ap-southeast-5a)"
   type        = string
-  default     = "vsw-k1as2atxwl1v5ls0bsgs3"
+  default     = "vsw-k1at25dsoy9bq7stxekle"
 }
 
 variable "instance_name" {
@@ -73,13 +73,13 @@ variable "system_disk_size" {
 variable "peering_private_ip" {
   description = "Static private IP on the primary peering interface"
   type        = string
-  default     = "10.151.127.250"
+  default     = "10.151.63.250"
 }
 
 variable "private_eni_ip" {
   description = "Static private IP on the secondary private interface"
   type        = string
-  default     = "10.151.74.100"
+  default     = "10.151.10.100"
 }
 
 variable "admin_ip_cidr" {

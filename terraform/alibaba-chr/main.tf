@@ -11,16 +11,16 @@ resource "alicloud_security_group" "peering_sg" {
 
   tags = {
     Name        = "${var.instance_name}-peering-sg"
-    Environment = "ManagedService"
-    Project     = "managedservice"
+    Environment = "Production"
+    Project     = "nextops"
     Tier        = "peering"
     Owner       = "ics-ms"
     ManagedBy   = "terraform"
-    CostCenter  = "managedservice"
+    CostCenter  = "nextops"
   }
 }
 
-# Whitelist SSH (Port 22) from Admin IP only
+# Whitelist SSH (Port 22) from Admin IP
 resource "alicloud_security_group_rule" "peering_ingress_ssh" {
   type              = "ingress"
   ip_protocol       = "tcp"
@@ -33,7 +33,7 @@ resource "alicloud_security_group_rule" "peering_ingress_ssh" {
   description       = "SSH management from Admin IP"
 }
 
-# Whitelist Winbox (Port 8291) from Admin IP only
+# Whitelist Winbox (Port 8291) from Admin IP
 resource "alicloud_security_group_rule" "peering_ingress_winbox" {
   type              = "ingress"
   ip_protocol       = "tcp"
@@ -85,6 +85,45 @@ resource "alicloud_security_group_rule" "peering_ingress_gre" {
   description       = "GRE Tunnel from GCP CHR Public IP"
 }
 
+# Allow IPsec IKEv2 (UDP 500) from Azure CHR Public IP
+resource "alicloud_security_group_rule" "peering_ingress_azure_ipsec_ike" {
+  type              = "ingress"
+  ip_protocol       = "udp"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "500/500"
+  security_group_id = alicloud_security_group.peering_sg.id
+  cidr_ip           = "70.153.184.179/32"
+  description       = "IPsec IKEv2 UDP 500 from Azure CHR Public IP"
+}
+
+# Allow IPsec NAT-Traversal (UDP 4500) from Azure CHR Public IP
+resource "alicloud_security_group_rule" "peering_ingress_azure_ipsec_natt" {
+  type              = "ingress"
+  ip_protocol       = "udp"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "4500/4500"
+  security_group_id = alicloud_security_group.peering_sg.id
+  cidr_ip           = "70.153.184.179/32"
+  description       = "IPsec NAT-T UDP 4500 from Azure CHR Public IP"
+}
+
+# Allow GRE Protocol from Azure CHR Public IP
+resource "alicloud_security_group_rule" "peering_ingress_azure_gre" {
+  type              = "ingress"
+  ip_protocol       = "gre"
+  nic_type          = "intranet"
+  policy            = "accept"
+  priority          = 1
+  port_range        = "-1/-1"
+  security_group_id = alicloud_security_group.peering_sg.id
+  cidr_ip           = "70.153.184.179/32"
+  description       = "GRE Tunnel from Azure CHR Public IP"
+}
+
 # Security Group 2: Dedicated for Secondary Interface (Private Subnet)
 resource "alicloud_security_group" "private_sg" {
   security_group_name = "${var.instance_name}-private-sg"
@@ -94,12 +133,12 @@ resource "alicloud_security_group" "private_sg" {
 
   tags = {
     Name        = "${var.instance_name}-private-sg"
-    Environment = "ManagedService"
-    Project     = "managedservice"
+    Environment = "Production"
+    Project     = "nextops"
     Tier        = "private"
     Owner       = "ics-ms"
     ManagedBy   = "terraform"
-    CostCenter  = "managedservice"
+    CostCenter  = "nextops"
   }
 }
 
@@ -185,11 +224,11 @@ resource "alicloud_instance" "chr" {
 
   tags = {
     Name        = var.instance_name
-    Environment = "ManagedService"
-    Project     = "managedservice"
+    Environment = "Production"
+    Project     = "nextops"
     Owner       = "ics-ms"
     ManagedBy   = "terraform"
-    CostCenter  = "managedservice"
+    CostCenter  = "nextops"
   }
 }
 
@@ -206,11 +245,11 @@ resource "alicloud_eip_address" "chr_eip" {
 
   tags = {
     Name        = "${var.instance_name}-eip"
-    Environment = "ManagedService"
-    Project     = "managedservice"
+    Environment = "Production"
+    Project     = "nextops"
     Owner       = "ics-ms"
     ManagedBy   = "terraform"
-    CostCenter  = "managedservice"
+    CostCenter  = "nextops"
   }
 }
 
@@ -234,12 +273,12 @@ resource "alicloud_ecs_network_interface" "private_eni" {
 
   tags = {
     Name        = "${var.instance_name}-private-eni"
-    Environment = "ManagedService"
-    Project     = "managedservice"
+    Environment = "Production"
+    Project     = "nextops"
     Tier        = "private"
     Owner       = "ics-ms"
     ManagedBy   = "terraform"
-    CostCenter  = "managedservice"
+    CostCenter  = "nextops"
   }
 }
 
