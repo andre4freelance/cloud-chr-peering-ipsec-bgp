@@ -16,7 +16,7 @@ The design employs a Dual-NIC Cloud-Native Network Virtual Appliance (NVA) patte
 +---------------------------+       IPsec + GRE / IPIP Tunnel       +---------------------------+
 |    Alibaba Cloud (Jakarta)| <===================================> |       GCP (Jakarta)       |
 |    CHR ASN 65531          |           (169.254.100.0/30)          |       CHR ASN 65532       |
-|    VPC: 10.151.64.0/18    |                                       |       VPC: 10.101.0.0/16  |
+|    VPC: 10.151.0.0/18     |                                       |       VPC: 10.101.0.0/16  |
 +---------------------------+                                       +---------------------------+
               ^                                                                   ^
               |                      Route-Based IPsec & eBGP                     |
@@ -36,7 +36,7 @@ The design employs a Dual-NIC Cloud-Native Network Virtual Appliance (NVA) patte
 
 | Cloud Provider | Region | ASN | Peering / WAN Subnet | Private / Workload Subnet | VPC/VNet Supernet |
 |---|---|---|---|---|---|
-| **Alibaba Cloud** | `ap-southeast-5` (Jakarta) | `65531` | `10.151.127.240/28` | `10.151.74.0/24` | `10.151.64.0/18` |
+| **Alibaba Cloud** | `ap-southeast-5` (Jakarta) | `65531` | `10.151.63.240/28` | `10.151.10.0/24` | `10.151.0.0/18` |
 | **Google Cloud (GCP)** | `asia-southeast2` (Jakarta) | `65532` | `10.101.16.0/28` | `10.101.0.0/22` | `10.101.0.0/18` |
 | **Microsoft Azure** | `indonesiacentral` (Jakarta) | `65533` | `10.126.16.0/28` | `10.126.0.0/22` | `10.126.0.0/18` |
 

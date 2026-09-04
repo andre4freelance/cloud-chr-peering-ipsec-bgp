@@ -295,10 +295,20 @@ Worth stating plainly so nobody adds it expecting to fix a broken tunnel, or
 removes it expecting to break a working one. The rules that actually matter are
 UDP 500 and UDP 4500.
 
-## Still open
+## 12. Alibaba Cloud Multi-NIC NVA Route Table Next-Hop Requirement (2026-09-04)
 
-**GCP has no route to the Alibaba supernet.** `gcloud compute routes list
---filter="destRange~10.151"` returns nothing, so only the CHR itself can reach
-Alibaba — a VM in `nextops-prod-apse2-subnet` still follows
-`nextops-default-route` to the bastion NAT. Needs a route with the CHR as
-next-hop instance, added through Terraform rather than by hand.
+When deploying a Multi-NIC NVA / CHR on Alibaba Cloud across multiple vSwitches (e.g. `ether1` WAN on peering vSwitch `10.151.63.240/28` and `ether2` LAN on private vSwitch `10.151.10.0/24`):
+
+1. **`NextHopType: Instance` defaults to Primary ENI:**
+   Configuring custom routes in the VPC route table pointing to `NextHopType: Instance` (the ECS Instance ID `i-xxxx`) causes Alibaba Cloud's SDN fabric to inject traffic into the **Primary ENI (`ether1`)**, dropping packets from private LAN hosts.
+   **Fix:** Point custom routes explicitly to `NextHopType: NetworkInterface` specifying the **Secondary ENI ID (`eni-xxxx`)** bound to the LAN subnet.
+
+2. **Route Table Isolation for Peering / WAN Subnet:**
+   Associating the peering vSwitch to the same route table as workload subnets creates an egress routing loop if `0.0.0.0/0 -> CHR` exists.
+   **Fix:** Create a dedicated Custom Route Table (`nextops-peering-rt`) associated strictly to the peering vSwitch containing only intra-VPC local routes.
+
+## 13. MikroTik RouterOS Point-to-Point Tunnel Sourcing for Ping/Fetch Tests
+
+Running `/ping <remote-ip>` or `/tool/fetch` from RouterOS without specifying `src-address` causes RouterOS to source packets from the point-to-point `/30` link-local interface IP (`169.254.x.x`). Remote cloud VMs have UDRs only for the advertised VPC supernets (`10.151.0.0/18`) and drop replies to unroutable `169.254.x.x` addresses.
+**Fix:** Always test with `src-address=<LAN_IP>` or `src-address=<WAN_IP>`, or verify directly from workload VMs.
+
