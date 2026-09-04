@@ -10,7 +10,9 @@ Production-grade Infrastructure as Code (Terraform) and MikroTik RouterOS v7 tem
 
 ---
 
-## 1. Architecture Overview
+## 1. Network Topology & Architecture
+
+![Multi-Cloud Full Mesh Topology](images/topology.png)
 
 Each cloud environment deploys a **Dual-NIC Cloud-Native Network Virtual Appliance (NVA)** using MikroTik Cloud Hosted Router (CHR):
 
@@ -19,9 +21,12 @@ Each cloud environment deploys a **Dual-NIC Cloud-Native Network Virtual Applian
 - **Underlay Tunnel Layer:** Hardware-assisted AEAD AES-256-GCM encrypted IPsec IKEv2 point-to-point tunnels with link-local `/30` point-to-point addressing (`169.254.x.x/30`).
 - **Overlay Routing Layer:** Dynamic eBGP full mesh with bidirectional route re-advertisement (`output.redistribute=bgp`) and deterministic distance-based path preference for automated transit failover.
 
+### Dual-NIC Cloud NVA Architecture
+![Dual-NIC Cloud NVA Architecture](images/chr.png)
+
 ```
                        +----------------------------------+
-                       |      AWS Singapore (ap-se-1)     |
+                       |      AWS                         |
                        |      ASN: 65530                  |
                        |      VPC: 10.29.0.0/18           |
                        |      EIP: 52.76.246.237          |
@@ -31,7 +36,7 @@ Each cloud environment deploys a **Dual-NIC Cloud-Native Network Virtual Applian
                       //                ||                \\
                      //                 ||                 \\
 +---------------------------+   169.254.100.0/30   +---------------------------+
-| Alibaba Jakarta (ap-se-5) |<====================>|  GCP Jakarta (asia-se2)   |
+| Alibaba Cloud             |<====================>|  Google Cloud (GCP)       |
 | ASN: 65531                |                      |  ASN: 65532               |
 | VPC: 10.151.0.0/18        |                      |  VPC: 10.101.0.0/16       |
 | EIP: 8.215.24.90          |<===================\ |  Static IP: 34.101.118.166|
@@ -40,7 +45,7 @@ Each cloud environment deploys a **Dual-NIC Cloud-Native Network Virtual Applian
                 \\                               // 169.254.101.0/30
                  \\                             //
                   +----------------------------+
-                  |  Azure Jakarta (id-central)|
+                  |  Microsoft Azure           |
                   |  ASN: 65533                |
                   |  VNet: 10.126.0.0/18       |
                   |  Public IP: 70.153.184.179 |
@@ -51,12 +56,12 @@ Each cloud environment deploys a **Dual-NIC Cloud-Native Network Virtual Applian
 
 ## 2. Multi-Cloud Addressing & Interconnect Matrix
 
-| Cloud Provider | Region | ASN | Peering WAN (ether1) | Private LAN (ether2) | Supernet CIDR | Instance Type |
-|---|---|---|---|---|---|---|
-| **AWS** | `ap-southeast-1` (Singapore) | `65530` | `10.29.63.250/28` | `10.29.16.100/20` | `10.29.0.0/18` | `t3.medium` (2 vCPU, 4 GB) |
-| **Alibaba Cloud** | `ap-southeast-5` (Jakarta) | `65531` | `10.151.63.250/28` | `10.151.10.100/24` | `10.151.0.0/18` | `ecs.t6-c1m1.large` (2 vCPU, 2 GB) |
-| **Google Cloud (GCP)** | `asia-southeast2` (Jakarta) | `65532` | `10.101.16.10/28` | `10.101.0.10/22` | `10.101.0.0/16` | `e2-standard-2` (2 vCPU, 8 GB) |
-| **Microsoft Azure** | `indonesiacentral` (Jakarta) | `65533` | `10.126.63.250/28` | `10.126.1.100/24` | `10.126.0.0/18` | `Standard_D2as_v4` (2 vCPU, 8 GB) |
+| Cloud Provider | ASN | Peering WAN (`ether1`) | Private LAN (`ether2`) | Supernet CIDR | Instance Type |
+|---|---|---|---|---|---|
+| **AWS** | `65530` | `10.29.63.250/28` | `10.29.16.100/20` | `10.29.0.0/18` | `t3.medium` (2 vCPU, 4 GB) |
+| **Alibaba Cloud** | `65531` | `10.151.63.250/28` | `10.151.10.100/24` | `10.151.0.0/18` | `ecs.t6-c1m1.large` (2 vCPU, 2 GB) |
+| **Google Cloud (GCP)** | `65532` | `10.101.16.10/28` | `10.101.0.10/22` | `10.101.0.0/16` | `e2-standard-2` (2 vCPU, 8 GB) |
+| **Microsoft Azure** | `65533` | `10.126.63.250/28` | `10.126.1.100/24` | `10.126.0.0/18` | `Standard_D2as_v4` (2 vCPU, 8 GB) |
 
 ### Point-to-Point Tunnel Interconnects (/30 Subnets)
 * **Alibaba <---> GCP:** `169.254.100.0/30` (`.1` Alibaba, `.2` GCP)
@@ -89,29 +94,19 @@ Direct Link Failure:
 
 ---
 
-## 4. Performance & Bandwidth Benchmark
-
-Measured using hardware-assisted AEAD `aes-256-gcm` IPsec encryption across live cloud production backbones:
-
-| Segment | Path Type | Round-Trip Latency | TCP Throughput (TX / RX) | Aggregate Bandwidth |
-|---|---|---|---|---|
-| **AWS <---> Azure** | Direct Cross-Region | **~19.6 ms** | **1.12 Gbps** / **434 Mbps** | **~1.55 Gbps** |
-| **AWS <---> GCP** | Direct Cross-Region | **~15.9 ms** | **566 Mbps** / **631 Mbps** | **~1.20 Gbps** |
-| **AWS <---> Alibaba** | Direct Cross-Region | **~13.8 ms** | **91 Mbps** / **96 Mbps** | **~187 Mbps** *(EIP Capped)* |
-| **Alibaba <---> GCP** | Local Jakarta IXP | **~2.1 ms** | **94 Mbps** / **91 Mbps** | **~185 Mbps** *(EIP Capped)* |
-| **Azure <---> GCP** | Direct Cloud Peering | **~30.6 ms** | **407 Mbps** / **878 Mbps** | **~1.28 Gbps** |
-| **Azure <---> Alibaba**| Direct Cloud Peering | **~15.1 ms** | **95 Mbps** / **91 Mbps** | **~186 Mbps** *(EIP Capped)* |
-
----
-
-## 5. Repository Structure
+## 4. Repository Structure
 
 ```
 ├── README.md                          # Architecture documentation and multi-cloud matrix
+├── apply.sh                           # Multi-cloud configuration renderer and deployer
 ├── vars.env.example                   # Environment variable template (Zero hardcoded secrets)
 ├── docs/                              # Engineering deep-dives and operational lessons
 │   └── lessons.md
+├── images/                            # Architecture diagrams and topologies
+│   ├── topology.png                   # 4-node full mesh architecture diagram
+│   └── chr.png                        # Dual-NIC Cloud NVA design layout
 ├── routeros/                          # RouterOS v7 templates per provider
+│   ├── aws-chr-config.rsc.tmpl
 │   ├── alibaba-chr-config.rsc.tmpl
 │   ├── azure-chr-config.rsc.tmpl
 │   └── gcp-chr-config.rsc.tmpl
@@ -130,7 +125,7 @@ Measured using hardware-assisted AEAD `aes-256-gcm` IPsec encryption across live
 
 ---
 
-## 6. Security & Best Practices
+## 5. Security & Best Practices
 
 - **Zero Hardcoded Secrets:** Pre-shared keys (PSK), SSH keys, and credentials are parameterized strictly via environment variables (`vars.env` is gitignored).
 - **1:1 NAT Routing Isolation:** Separate routing tables ensure NVA WAN interfaces only route locally to the Internet Gateway, eliminating routing loops.
@@ -139,6 +134,6 @@ Measured using hardware-assisted AEAD `aes-256-gcm` IPsec encryption across live
 
 ---
 
-## 7. License
+## 6. License
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
