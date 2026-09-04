@@ -51,7 +51,7 @@ resource "azurerm_network_security_group" "peering_nsg" {
     protocol                   = "Udp"
     source_port_range          = "*"
     destination_port_range     = "500"
-    source_address_prefixes    = ["${var.gcp_chr_public_ip}/32", "${var.aliyun_chr_public_ip}/32"]
+    source_address_prefixes    = ["${var.gcp_chr_public_ip}/32", "${var.aliyun_chr_public_ip}/32", "${var.aws_chr_public_ip}/32"]
     destination_address_prefix = "*"
   }
 
@@ -63,7 +63,7 @@ resource "azurerm_network_security_group" "peering_nsg" {
     protocol                   = "Udp"
     source_port_range          = "*"
     destination_port_range     = "4500"
-    source_address_prefixes    = ["${var.gcp_chr_public_ip}/32", "${var.aliyun_chr_public_ip}/32"]
+    source_address_prefixes    = ["${var.gcp_chr_public_ip}/32", "${var.aliyun_chr_public_ip}/32", "${var.aws_chr_public_ip}/32"]
     destination_address_prefix = "*"
   }
 
@@ -75,7 +75,7 @@ resource "azurerm_network_security_group" "peering_nsg" {
     protocol                   = "*"
     source_port_range          = "*"
     destination_port_range     = "*"
-    source_address_prefixes    = ["${var.gcp_chr_public_ip}/32", "${var.aliyun_chr_public_ip}/32"]
+    source_address_prefixes    = ["${var.gcp_chr_public_ip}/32", "${var.aliyun_chr_public_ip}/32", "${var.aws_chr_public_ip}/32"]
     destination_address_prefix = "*"
   }
 
@@ -87,7 +87,7 @@ resource "azurerm_network_security_group" "peering_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "179"
-    source_address_prefixes    = ["${var.gcp_chr_public_ip}/32", "${var.aliyun_chr_public_ip}/32"]
+    source_address_prefixes    = ["${var.gcp_chr_public_ip}/32", "${var.aliyun_chr_public_ip}/32", "${var.aws_chr_public_ip}/32"]
     destination_address_prefix = "*"
   }
 

@@ -1,140 +1,183 @@
 #!/usr/bin/env bash
-# Render and apply the tunnel configuration to both MikroTik CHRs.
+# =============================================================================
+# Multi-Cloud MikroTik CHR Configuration Generator & Deployment Script
+# 4-Node Full Mesh (AWS, Alibaba Cloud, Google Cloud, Microsoft Azure)
 #
-#   ./apply.sh render          # render both templates, print with the PSK redacted
-#   ./apply.sh ali             # apply the Alibaba side
-#   ./apply.sh gcp             # apply the GCP side
-#   ./apply.sh both            # apply Alibaba then GCP
-#   ./apply.sh status          # IPsec / GRE / BGP / route state on both ends
-#
-# Reads vars.env. Never prints the PSK.
-#
-# SSH targets default to the `chr-ali` / `chr-gcp` aliases in ~/.ssh/config;
-# override with ALI_SSH / GCP_SSH.
+# Usage:
+#   ./apply.sh render [node]   # render templates with secrets redacted (aws|ali|gcp|azure|all)
+#   ./apply.sh status [node]   # check IPsec, BGP, GRE, and Route health on live CHRs
+#   ./apply.sh apply <node>    # apply configuration to target router (aws|ali|gcp|azure|all)
+# =============================================================================
+
 set -euo pipefail
 cd "$(dirname "$0")"
-[ -f vars.env ] || { echo "vars.env missing - copy vars.env.example"; exit 1; }
-set -a; . ./vars.env; set +a
-: "${IPSEC_PSK:?}"; [ "$IPSEC_PSK" = "CHANGE_ME" ] && { echo "set a real IPSEC_PSK"; exit 1; }
 
+CONFIG_FILE="vars.env"
+if [ ! -f "$CONFIG_FILE" ]; then
+  if [ -f "vars.env.example" ]; then
+    CONFIG_FILE="vars.env.example"
+  else
+    echo "Error: vars.env or vars.env.example missing." >&2
+    exit 1
+  fi
+fi
+
+# Load variables safely
+eval "$(python3 -c "
+with open('$CONFIG_FILE') as f:
+    for line in f:
+        line = line.strip()
+        if not line or line.startswith('#'): continue
+        if '#' in line: line = line.split('#')[0].strip()
+        if '=' in line:
+            k, v = line.split('=', 1)
+            print(f'{k.strip()}={v.strip()}')
+")"
+
+AWS_SSH="${AWS_SSH:-chr-aws}"
 ALI_SSH="${ALI_SSH:-chr-ali}"
 GCP_SSH="${GCP_SSH:-chr-gcp}"
+AZURE_SSH="${AZURE_SSH:-chr-azure}"
 
 OUT=$(mktemp -d); trap 'rm -rf "$OUT"' EXIT
 
-# Shared substitutions. Both templates draw from the same variable set, so the
-# two sides can never drift into non-mirrored selectors.
-render() {
-  sed -e "s|@@ALI_PUBLIC_IP@@|$ALI_PUBLIC_IP|g" \
-      -e "s|@@ALI_PEERING_IP@@|$ALI_PEERING_IP|g" \
-      -e "s|@@ALI_PRIVATE_IP@@|$ALI_PRIVATE_IP|g" \
-      -e "s|@@ALI_PRIVATE_SUBNET@@|$ALI_PRIVATE_SUBNET|g" \
-      -e "s|@@ALI_ASN@@|$ALI_ASN|g" \
-      -e "s|@@ALI_SUPERNET@@|$ALI_SUPERNET|g" \
-      -e "s|@@ALI_TUNNEL_IP@@|$ALI_TUNNEL_IP|g" \
-      -e "s|@@GCP_PUBLIC_IP@@|$GCP_PUBLIC_IP|g" \
-      -e "s|@@GCP_PEERING_IP@@|$GCP_PEERING_IP|g" \
-      -e "s|@@GCP_PRIVATE_IP@@|$GCP_PRIVATE_IP|g" \
-      -e "s|@@GCP_PRIVATE_SUBNET@@|$GCP_PRIVATE_SUBNET|g" \
-      -e "s|@@GCP_ASN@@|$GCP_ASN|g" \
-      -e "s|@@GCP_SUPERNET@@|$GCP_SUPERNET|g" \
-      -e "s|@@GCP_TUNNEL_IP@@|$GCP_TUNNEL_IP|g" \
-      -e "s|@@TUNNEL_NETWORK@@|$TUNNEL_NETWORK|g" \
-      -e "s|@@TUNNEL_MTU@@|$TUNNEL_MTU|g" \
-      -e "s|@@TUNNEL_MSS@@|$TUNNEL_MSS|g" \
-      -e "s|@@TIMEZONE@@|$TIMEZONE|g" \
-      -e "s|@@IPSEC_PSK@@|$IPSEC_PSK|g" \
-      "$1"
+render_file() {
+  local src="$1"
+  sed \
+    -e "s|__AWS_PUBLIC_IP__|$AWS_PUBLIC_IP|g" \
+    -e "s|__AWS_PEERING_IP__|$AWS_PEERING_IP|g" \
+    -e "s|__AWS_PRIVATE_IP__|$AWS_PRIVATE_IP|g" \
+    -e "s|__AWS_ASN__|$AWS_ASN|g" \
+    -e "s|__AWS_SUPERNET__|$AWS_SUPERNET|g" \
+    -e "s|__ALI_PUBLIC_IP__|$ALI_PUBLIC_IP|g" \
+    -e "s|__ALI_PEERING_IP__|$ALI_PEERING_IP|g" \
+    -e "s|__ALI_PRIVATE_IP__|$ALI_PRIVATE_IP|g" \
+    -e "s|__ALI_ASN__|$ALI_ASN|g" \
+    -e "s|__ALI_SUPERNET__|$ALI_SUPERNET|g" \
+    -e "s|__GCP_PUBLIC_IP__|$GCP_PUBLIC_IP|g" \
+    -e "s|__GCP_PEERING_IP__|$GCP_PEERING_IP|g" \
+    -e "s|__GCP_PRIVATE_IP__|$GCP_PRIVATE_IP|g" \
+    -e "s|__GCP_ASN__|$GCP_ASN|g" \
+    -e "s|__GCP_SUPERNET__|$GCP_SUPERNET|g" \
+    -e "s|__AZURE_PUBLIC_IP__|$AZURE_PUBLIC_IP|g" \
+    -e "s|__AZURE_PEERING_IP__|$AZURE_PEERING_IP|g" \
+    -e "s|__AZURE_PRIVATE_IP__|$AZURE_PRIVATE_IP|g" \
+    -e "s|__AZURE_ASN__|$AZURE_ASN|g" \
+    -e "s|__AZURE_SUPERNET__|$AZURE_SUPERNET|g" \
+    -e "s|__ALI_GCP_TUNNEL_ALI_IP__|$ALI_GCP_TUNNEL_ALI_IP|g" \
+    -e "s|__ALI_GCP_TUNNEL_GCP_IP__|$ALI_GCP_TUNNEL_GCP_IP|g" \
+    -e "s|__ALI_GCP_TUNNEL_NETWORK__|$ALI_GCP_TUNNEL_NETWORK|g" \
+    -e "s|__AZURE_GCP_TUNNEL_AZURE_IP__|$AZURE_GCP_TUNNEL_AZURE_IP|g" \
+    -e "s|__AZURE_GCP_TUNNEL_GCP_IP__|$AZURE_GCP_TUNNEL_GCP_IP|g" \
+    -e "s|__AZURE_GCP_TUNNEL_NETWORK__|$AZURE_GCP_TUNNEL_NETWORK|g" \
+    -e "s|__AZURE_ALI_TUNNEL_AZURE_IP__|$AZURE_ALI_TUNNEL_AZURE_IP|g" \
+    -e "s|__AZURE_ALI_TUNNEL_ALI_IP__|$AZURE_ALI_TUNNEL_ALI_IP|g" \
+    -e "s|__AZURE_ALI_TUNNEL_NETWORK__|$AZURE_ALI_TUNNEL_NETWORK|g" \
+    -e "s|__AWS_ALI_TUNNEL_AWS_IP__|$AWS_ALI_TUNNEL_AWS_IP|g" \
+    -e "s|__AWS_ALI_TUNNEL_ALI_IP__|$AWS_ALI_TUNNEL_ALI_IP|g" \
+    -e "s|__AWS_ALI_TUNNEL_NETWORK__|$AWS_ALI_TUNNEL_NETWORK|g" \
+    -e "s|__AWS_GCP_TUNNEL_AWS_IP__|$AWS_GCP_TUNNEL_AWS_IP|g" \
+    -e "s|__AWS_GCP_TUNNEL_GCP_IP__|$AWS_GCP_TUNNEL_GCP_IP|g" \
+    -e "s|__AWS_GCP_TUNNEL_NETWORK__|$AWS_GCP_TUNNEL_NETWORK|g" \
+    -e "s|__AWS_AZURE_TUNNEL_AWS_IP__|$AWS_AZURE_TUNNEL_AWS_IP|g" \
+    -e "s|__AWS_AZURE_TUNNEL_AZURE_IP__|$AWS_AZURE_TUNNEL_AZURE_IP|g" \
+    -e "s|__AWS_AZURE_TUNNEL_NETWORK__|$AWS_AZURE_TUNNEL_NETWORK|g" \
+    -e "s|__TUNNEL_MTU__|$TUNNEL_MTU|g" \
+    -e "s|__TUNNEL_MSS__|$TUNNEL_MSS|g" \
+    -e "s|__IPSEC_PSK_ALI_GCP__|${IPSEC_PSK_ALI_GCP:-CHANGE_ME}|g" \
+    -e "s|__IPSEC_PSK_AZURE_GCP__|${IPSEC_PSK_AZURE_GCP:-CHANGE_ME}|g" \
+    -e "s|__IPSEC_PSK_AZURE_ALI__|${IPSEC_PSK_AZURE_ALI:-CHANGE_ME}|g" \
+    -e "s|__IPSEC_PSK_AWS_ALI__|${IPSEC_PSK_AWS_ALI:-CHANGE_ME}|g" \
+    -e "s|__IPSEC_PSK_AWS_GCP__|${IPSEC_PSK_AWS_GCP:-CHANGE_ME}|g" \
+    -e "s|__IPSEC_PSK_AWS_AZURE__|${IPSEC_PSK_AWS_AZURE:-CHANGE_ME}|g" \
+    "$src"
 }
 
-# Objects each template re-adds. Removed first so re-running is idempotent —
-# RouterOS `add` duplicates rather than replaces.
-#
-# NOTE: unlike the CHR<->pfSense version of this script, /ip/dhcp-client is
-# deliberately NOT removed. Both CHRs get every interface address from DHCP and
-# the templates do not re-add the clients, so wiping them drops the addresses,
-# the default route, and the SSH session applying the config.
-cleanup_cmds() {
-  local peer="$1" chain="$2" gre="$3" conn="$4" al="$5"
-  cat <<EOF
-/routing/bgp/connection remove [find name="$conn"];
-/routing/bgp/instance remove [find name="$peer"];
-/routing/bgp/template remove [find name="$peer"];
-/routing/filter/rule remove [find chain~"$chain"];
-/ip/firewall/address-list remove [find list="$al"];
-/ip/ipsec/policy remove [find peer="$peer"];
-/ip/ipsec/identity remove [find peer="$peer"];
-/ip/ipsec/peer remove [find name="$peer"];
-/ip/ipsec/proposal remove [find name="$peer"];
-/ip/ipsec/profile remove [find name="$peer"];
-/ip/address remove [find interface="$gre"];
-/interface/gre remove [find name="$gre"];
-/ip/route remove [find comment="vpc network"];
-/ip/route remove [find comment="peer gre endpoint, encrypted by the ipsec policy"];
-/ip/firewall/mangle remove [find comment="clamp tcp mss to the measured path mtu"];
-/ip/firewall/nat remove [find comment="NAT private subnet to the internet, never to the peer"];
-EOF
+check_status() {
+  local host="$1"
+  local name="$2"
+  echo "================================================================="
+  echo " NODE: $name ($host)"
+  echo "================================================================="
+  ssh -o ConnectTimeout=5 "$host" '
+    :put "--- [1] System Identity & Resources ---";
+    /system/identity/print;
+    :put "--- [2] IP Addresses & Interfaces ---";
+    /ip/address/print without-paging;
+    :put "--- [3] IPsec Active Peers & SAs ---";
+    /ip/ipsec/active-peers/print without-paging;
+    /ip/ipsec/installed-sa/print without-paging;
+    :put "--- [4] GRE Tunnels ---";
+    /interface/gre/print without-paging;
+    :put "--- [5] BGP Sessions & Prefixes ---";
+    /routing/bgp/session/print without-paging;
+    :put "--- [6] Active Learned BGP Routes ---";
+    /ip/route/print without-paging where bgp;
+  ' || echo "Error: Failed to reach $host"
+  echo ""
 }
 
-apply_side() {
-  local host="$1" tmpl="$2" peer="$3" chain="$4" gre="$5" conn="$6" al="$7"
-  render "$tmpl" > "$OUT/t.rsc"
-  echo "[$host] removing objects this template re-adds..."
-  cleanup_cmds "$peer" "$chain" "$gre" "$conn" "$al" | ssh "$host" >/dev/null 2>&1 || true
-  scp -q "$OUT/t.rsc" "$host:/tunnel.rsc"
-  echo "[$host] importing..."
-  # RouterOS /import reports failures on stdout and still exits 0, so a plain
-  # `ssh ... || echo failed` claims success on a broken config. Grep the output.
-  local log="$OUT/import.log"
-  ssh "$host" '/import file-name=tunnel.rsc; /file remove [find name=tunnel.rsc]' 2>&1 | tee "$log"
-  if grep -qiE "script error|syntax error|bad parameter|failure|expected end of command" "$log"; then
-    echo "[$host] IMPORT FAILED — the config is PARTIALLY applied. Fix the template and re-run." >&2
-    return 1
-  fi
-  echo "[$host] applied."
+apply_node() {
+  local host="$1"
+  local tmpl="$2"
+  local name="$3"
+  echo "[$name] Rendering $tmpl..."
+  render_file "$tmpl" > "$OUT/deploy.rsc"
+  echo "[$name] Uploading configuration to $host..."
+  scp -q "$OUT/deploy.rsc" "$host:/deploy.rsc"
+  echo "[$name] Executing RouterOS import..."
+  ssh "$host" '/import file-name=deploy.rsc; /file remove [find name=deploy.rsc]'
+  echo "[$name] Deployment finished successfully."
 }
 
-case "${1:-}" in
+ACTION="${1:-help}"
+TARGET="${2:-all}"
+
+case "$ACTION" in
   render)
-    for t in routeros/chr-ali-tunnel.rsc.tmpl routeros/chr-gcp-tunnel.rsc.tmpl; do
-      echo "########## $t ##########"
-      render "$t" | sed "s|$IPSEC_PSK|<PSK-REDACTED>|g"
+    for node in aws alibaba gcp azure; do
+      if [ "$TARGET" = "all" ] || [ "$TARGET" = "$node" ]; then
+        tmpl="routeros/${node}-chr-config.rsc.tmpl"
+        echo "#################################################################"
+        echo "# TEMPLATE: $tmpl"
+        echo "#################################################################"
+        render_file "$tmpl" | sed -E 's/(secret=)"[^"]+"/\1"<PSK-REDACTED>"/g'
+        echo ""
+      fi
     done
-    ;;
-  ali)
-    apply_side "$ALI_SSH" routeros/chr-ali-tunnel.rsc.tmpl gcp gcp gre-gcp chr-gcp ali-advertise
-    # The stock Alibaba CHR image ships a bare `chain=srcnat action=masquerade`
-    # rule that matches everything, tunnel traffic included. The template adds a
-    # scoped replacement; drop the unscoped original.
-    ssh "$ALI_SSH" '/ip/firewall/nat remove [find where chain=srcnat action=masquerade !out-interface]' || true
-    ;;
-  gcp)
-    apply_side "$GCP_SSH" routeros/chr-gcp-tunnel.rsc.tmpl ali ali gre-ali chr-ali gcp-advertise
-    ;;
-  both)
-    "$0" ali
-    "$0" gcp
     ;;
   status)
-    for h in "$ALI_SSH" "$GCP_SSH"; do
-      echo "########## $h ##########"
-      ssh "$h" '
-        :put "--- ipsec active peers ---";
-        /ip/ipsec/active-peers/print without-paging;
-        :put "--- ipsec sa (direction counters) ---";
-        /ip/ipsec/installed-sa/print without-paging;
-        :put "--- ipsec policy ---";
-        /ip/ipsec/policy/print without-paging;
-        :put "--- gre ---";
-        /interface/gre/print without-paging;
-        :put "--- bgp session ---";
-        /routing/bgp/session/print without-paging;
-        :put "--- bgp advertisements ---";
-        /routing/bgp/advertisements/print without-paging;
-        :put "--- routes learned via bgp ---";
-        /ip/route/print without-paging where bgp;
-      ' || true
-    done
+    case "$TARGET" in
+      aws) check_status "$AWS_SSH" "AWS CHR" ;;
+      ali|alibaba) check_status "$ALI_SSH" "Alibaba CHR" ;;
+      gcp) check_status "$GCP_SSH" "GCP CHR" ;;
+      azure) check_status "$AZURE_SSH" "Azure CHR" ;;
+      all)
+        check_status "$AWS_SSH" "AWS CHR"
+        check_status "$ALI_SSH" "Alibaba CHR"
+        check_status "$GCP_SSH" "GCP CHR"
+        check_status "$AZURE_SSH" "Azure CHR"
+        ;;
+      *) echo "Unknown target: $TARGET (use aws|ali|gcp|azure|all)"; exit 1 ;;
+    esac
     ;;
-  *) sed -n '2,12p' "$0"; exit 1 ;;
+  apply)
+    case "$TARGET" in
+      aws) apply_node "$AWS_SSH" "routeros/aws-chr-config.rsc.tmpl" "AWS CHR" ;;
+      ali|alibaba) apply_node "$ALI_SSH" "routeros/alibaba-chr-config.rsc.tmpl" "Alibaba CHR" ;;
+      gcp) apply_node "$GCP_SSH" "routeros/gcp-chr-config.rsc.tmpl" "GCP CHR" ;;
+      azure) apply_node "$AZURE_SSH" "routeros/azure-chr-config.rsc.tmpl" "Azure CHR" ;;
+      all)
+        apply_node "$AWS_SSH" "routeros/aws-chr-config.rsc.tmpl" "AWS CHR"
+        apply_node "$ALI_SSH" "routeros/alibaba-chr-config.rsc.tmpl" "Alibaba CHR"
+        apply_node "$GCP_SSH" "routeros/gcp-chr-config.rsc.tmpl" "GCP CHR"
+        apply_node "$AZURE_SSH" "routeros/azure-chr-config.rsc.tmpl" "Azure CHR"
+        ;;
+      *) echo "Unknown target: $TARGET (use aws|ali|gcp|azure|all)"; exit 1 ;;
+    esac
+    ;;
+  *)
+    echo "Usage: $0 {render|status|apply} [aws|ali|gcp|azure|all]"
+    exit 1
+    ;;
 esac

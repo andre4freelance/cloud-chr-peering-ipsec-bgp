@@ -1,40 +1,79 @@
-# RouterOS v7 configuration template for Azure MikroTik CHR ("chr-peering")
+# =============================================================================
+# RouterOS v7 Configuration Template: Azure MikroTik CHR ("chr-peering")
 # Dual-NIC Cloud-Native NVA on Microsoft Azure (indonesiacentral)
+# 4-Node Multi-Cloud Full Mesh (AWS, Alibaba, GCP, Azure)
+# =============================================================================
 
-/interface/gre/add allow-fast-path=no !keepalive local-address=__AZURE_PEERING_IP__ mtu=__TUNNEL_MTU__ name=gre-gcp remote-address=__GCP_PEERING_IP__
+/system/identity/set name=azure-chr-peering
 
-/ip/ipsec/profile/add dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h name=gcp
+# 1. IPsec Proposals & Profiles
+/ip/ipsec/profile/add name=gcp dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h nat-traversal=yes dpd-interval=8s dpd-maximum-failures=4
+/ip/ipsec/proposal/add name=gcp auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h pfs-group=modp2048
 
-/ip/ipsec/peer/add address=__GCP_PUBLIC_IP__/32 exchange-mode=ike2 local-address=__AZURE_PEERING_IP__ name=gcp profile=gcp
+/ip/ipsec/profile/add name=ali dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h nat-traversal=yes dpd-interval=8s dpd-maximum-failures=4
+/ip/ipsec/proposal/add name=ali auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h pfs-group=modp2048
 
-/ip/ipsec/proposal/add auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h name=gcp pfs-group=modp2048
+/ip/ipsec/profile/add name=aws dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h nat-traversal=yes dpd-interval=8s dpd-maximum-failures=4
+/ip/ipsec/proposal/add name=aws auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h pfs-group=modp2048
 
-/ip/ipsec/identity/add peer=gcp remote-id=ignore secret="__IPSEC_PSK_AZURE_GCP__"
+# 2. IPsec Peers & Identities
+/ip/ipsec/peer/add name=gcp address=__GCP_PUBLIC_IP__/32 local-address=__AZURE_PEERING_IP__ profile=gcp exchange-mode=ike2 send-initial-contact=yes
+/ip/ipsec/identity/add peer=gcp auth-method=pre-shared-key secret="__IPSEC_PSK_AZURE_GCP__" remote-id=ignore generate-policy=no
 
-/ip/ipsec/policy/add dst-address=__GCP_PEERING_IP__/32 peer=gcp proposal=gcp protocol=gre src-address=__AZURE_PEERING_IP__/32 tunnel=yes
+/ip/ipsec/peer/add name=ali address=__ALI_PUBLIC_IP__/32 local-address=__AZURE_PEERING_IP__ profile=ali exchange-mode=ike2 send-initial-contact=yes
+/ip/ipsec/identity/add peer=ali auth-method=pre-shared-key secret="__IPSEC_PSK_AZURE_ALI__" remote-id=ignore generate-policy=no
 
-/ip/address/add address=__AZURE_GCP_TUNNEL_AZURE_IP__/30 interface=gre-gcp network=__AZURE_GCP_TUNNEL_NETWORK__
+/ip/ipsec/peer/add name=aws address=__AWS_PUBLIC_IP__/32 local-address=__AZURE_PEERING_IP__ profile=aws exchange-mode=ike2 send-initial-contact=yes
+/ip/ipsec/identity/add peer=aws auth-method=pre-shared-key secret="__IPSEC_PSK_AWS_AZURE__" remote-id=ignore generate-policy=no
 
-/ip/firewall/address-list/add address=__AZURE_SUPERNET__ comment="prefix advertised to peers" list=azure-advertise
-/ip/firewall/address-list/add address=__GCP_SUPERNET__ comment=gcp list=cloud
-/ip/firewall/address-list/add address=__ALI_SUPERNET__ comment=aliyun list=cloud
+# 3. IPsec Policies
+/ip/ipsec/policy/add peer=gcp tunnel=yes src-address=__AZURE_PEERING_IP__/32 dst-address=__GCP_PEERING_IP__/32 protocol=gre action=encrypt proposal=gcp
+/ip/ipsec/policy/add peer=ali tunnel=yes src-address=__AZURE_PEERING_IP__/32 dst-address=__ALI_PEERING_IP__/32 protocol=gre action=encrypt proposal=ali
+/ip/ipsec/policy/add peer=aws tunnel=yes src-address=__AZURE_PEERING_IP__/32 dst-address=__AWS_PEERING_IP__/32 protocol=gre action=encrypt proposal=aws
 
-/ip/firewall/mangle/add action=change-mss chain=forward comment="clamp tcp mss to the measured path mtu" new-mss=__TUNNEL_MSS__ out-interface=gre-gcp protocol=tcp tcp-flags=syn
-/ip/firewall/mangle/add action=change-mss chain=forward comment="clamp tcp mss to the measured path mtu" in-interface=gre-gcp new-mss=__TUNNEL_MSS__ protocol=tcp tcp-flags=syn
+# 4. GRE Interfaces & Addressing
+/interface/gre/add name=gre-gcp mtu=__TUNNEL_MTU__ local-address=__AZURE_PEERING_IP__ remote-address=__GCP_PEERING_IP__ clamp-tcp-mss=yes dont-fragment=no allow-fast-path=no
+/interface/gre/add name=gre-ali mtu=__TUNNEL_MTU__ local-address=__AZURE_PEERING_IP__ remote-address=__ALI_PEERING_IP__ clamp-tcp-mss=yes dont-fragment=no allow-fast-path=no
+/interface/gre/add name=gre-aws mtu=__TUNNEL_MTU__ local-address=__AZURE_PEERING_IP__ remote-address=__AWS_PEERING_IP__ clamp-tcp-mss=yes dont-fragment=no allow-fast-path=no
 
-/ip/firewall/nat/add action=masquerade chain=srcnat comment="NAT private subnet to the internet, never to the peer" dst-address-list=!cloud out-interface=ether1
+/ip/address/add address=__AZURE_GCP_TUNNEL_AZURE_IP__/30 network=__AZURE_GCP_TUNNEL_NETWORK__ interface=gre-gcp
+/ip/address/add address=__AZURE_ALI_TUNNEL_AZURE_IP__/30 network=__AZURE_ALI_TUNNEL_NETWORK__ interface=gre-ali
+/ip/address/add address=__AWS_AZURE_TUNNEL_AZURE_IP__/30 network=__AWS_AZURE_TUNNEL_NETWORK__ interface=gre-aws
 
-/ip/service/set ftp disabled=yes
-/ip/service/set telnet disabled=yes
-/ip/service/set www disabled=yes
-/ip/service/set api disabled=yes
-/ip/service/set api-ssl disabled=yes
+# 5. Address Lists & Static Anchor Routes
+/ip/firewall/address-list/add list=azure-advertise address=__AZURE_SUPERNET__ comment="prefix advertised to peers"
+/ip/firewall/address-list/add list=azure-advertise address=__GCP_SUPERNET__ comment="gcp-transit"
+/ip/firewall/address-list/add list=azure-advertise address=__ALI_SUPERNET__ comment="ali-transit"
+/ip/firewall/address-list/add list=azure-advertise address=__AWS_SUPERNET__ comment="aws-transit"
 
-/routing/bgp/instance/add as=__AZURE_ASN__ disabled=no name=azure router-id=__AZURE_PEERING_IP__
+/ip/firewall/address-list/add list=cloud address=__GCP_SUPERNET__ comment="gcp"
+/ip/firewall/address-list/add list=cloud address=__ALI_SUPERNET__ comment="aliyun"
+/ip/firewall/address-list/add list=cloud address=__AWS_SUPERNET__ comment="aws"
 
-/routing/bgp/template/add as=__AZURE_ASN__ name=azure
+/ip/route/add dst-address=__AZURE_SUPERNET__ gateway=__AZURE_PRIVATE_IP__ comment="vnet-network"
 
-/routing/filter/rule/add chain=gcp-out rule="if (dst == __AZURE_SUPERNET__) { accept } reject"
-/routing/filter/rule/add chain=gcp-in rule="if (dst == 0.0.0.0/0 || dst in __GCP_PUBLIC_IP__/32 || dst in __AZURE_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __GCP_SUPERNET__ || dst in __ALI_SUPERNET__) { accept } reject }"
+# 6. Mangle (MSS Clamping) & NAT
+/ip/firewall/mangle/add chain=forward action=change-mss new-mss=__TUNNEL_MSS__ passthrough=yes tcp-flags=syn protocol=tcp tcp-mss=1361-65535 comment="clamp MSS for tunnel traffic"
+/ip/firewall/nat/add chain=srcnat action=masquerade dst-address-list=!cloud out-interface=ether1 comment="NAT private subnet to the internet, never to the peer"
 
-/routing/bgp/connection/add as=__AZURE_ASN__ disabled=no input.filter=gcp-in instance=azure local.address=__AZURE_GCP_TUNNEL_AZURE_IP__ .role=ebgp name=chr-gcp output.filter-chain=gcp-out .network=azure-advertise remote.address=__AZURE_GCP_TUNNEL_GCP_IP__/32 .as=__GCP_ASN__ routing-table=main templates=azure
+# 7. Routing Filter Rules (Distance 20 for direct, Distance 30 for transit)
+/routing/filter/rule/add chain=gcp-out rule="if (dst in __AZURE_SUPERNET__ || dst in __ALI_SUPERNET__ || dst in __AWS_SUPERNET__) { accept } reject"
+/routing/filter/rule/add chain=ali-out rule="if (dst in __AZURE_SUPERNET__ || dst in __GCP_SUPERNET__ || dst in __AWS_SUPERNET__) { accept } reject"
+/routing/filter/rule/add chain=aws-out rule="if (dst in __AZURE_SUPERNET__ || dst in __ALI_SUPERNET__ || dst in __GCP_SUPERNET__) { accept } reject"
+
+/routing/filter/rule/add chain=gcp-in rule="if (dst == 0.0.0.0/0 || dst in __GCP_PUBLIC_IP__/32 || dst in __AZURE_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __GCP_SUPERNET__) { set distance 20; accept } else { if (dst in __ALI_SUPERNET__ || dst in __AWS_SUPERNET__) { set distance 30; accept } reject } }"
+/routing/filter/rule/add chain=ali-in rule="if (dst == 0.0.0.0/0 || dst in __ALI_PUBLIC_IP__/32 || dst in __AZURE_ALI_TUNNEL_NETWORK__/30) { reject } else { if (dst in __ALI_SUPERNET__) { set distance 20; accept } else { if (dst in __GCP_SUPERNET__ || dst in __AWS_SUPERNET__) { set distance 30; accept } reject } }"
+/routing/filter/rule/add chain=aws-in rule="if (dst == 0.0.0.0/0 || dst in __AWS_PUBLIC_IP__/32 || dst in __AWS_AZURE_TUNNEL_NETWORK__/30) { reject } else { if (dst in __AWS_SUPERNET__) { set distance 20; accept } else { if (dst in __ALI_SUPERNET__ || dst in __GCP_SUPERNET__) { set distance 30; accept } reject } }"
+
+# 8. Dynamic eBGP Configuration
+/routing/bgp/instance/add name=gcp as=__AZURE_ASN__ router-id=__AZURE_PEERING_IP__
+/routing/bgp/template/add name=gcp as=__AZURE_ASN__
+/routing/bgp/connection/add name=chr-gcp instance=gcp remote.address=__AZURE_GCP_TUNNEL_GCP_IP__/32 .as=__GCP_ASN__ local.address=__AZURE_GCP_TUNNEL_AZURE_IP__ .role=ebgp routing-table=main templates=gcp as=__AZURE_ASN__ output.network=azure-advertise output.filter-chain=gcp-out input.filter=gcp-in output.redistribute=bgp
+
+/routing/bgp/instance/add name=ali as=__AZURE_ASN__ router-id=__AZURE_PEERING_IP__
+/routing/bgp/template/add name=ali as=__AZURE_ASN__
+/routing/bgp/connection/add name=chr-ali instance=ali remote.address=__AZURE_ALI_TUNNEL_ALI_IP__/32 .as=__ALI_ASN__ local.address=__AZURE_ALI_TUNNEL_AZURE_IP__ .role=ebgp routing-table=main templates=ali as=__AZURE_ASN__ output.network=azure-advertise output.filter-chain=ali-out input.filter=ali-in output.redistribute=bgp
+
+/routing/bgp/instance/add name=aws as=__AZURE_ASN__ router-id=__AZURE_PEERING_IP__
+/routing/bgp/template/add name=aws as=__AZURE_ASN__
+/routing/bgp/connection/add name=chr-aws instance=aws remote.address=__AWS_AZURE_TUNNEL_AWS_IP__/32 .as=__AWS_ASN__ local.address=__AWS_AZURE_TUNNEL_AZURE_IP__ .role=ebgp routing-table=main templates=aws as=__AZURE_ASN__ output.network=azure-advertise output.filter-chain=aws-out input.filter=aws-in output.redistribute=bgp

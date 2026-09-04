@@ -1,34 +1,79 @@
 # =============================================================================
-# MikroTik RouterOS v7 Configuration Script: Alibaba Cloud CHR (Side A)
-# Topology: Alibaba Cloud (ap-southeast-5) <---> GCP (asia-southeast2)
+# RouterOS v7 Configuration Template: Alibaba Cloud CHR ("chr-peering")
+# Dual-NIC Cloud-Native NVA on Alibaba Cloud (ap-southeast-5)
+# 4-Node Multi-Cloud Full Mesh (AWS, Alibaba, GCP, Azure)
 # =============================================================================
 
-# 1. Interface & IP Naming
-/interface set [ find default-name=ether1 ] name=ether1-peering-wan comment="Alibaba Peering Subnet (WAN/EIP)"
-/interface set [ find default-name=ether2 ] name=ether2-private comment="Alibaba Private Subnet 5a"
+/system/identity/set name=aliyun-chr-peering
 
-# 2. IPsec Profile & Proposal (IKEv2, AES-GCM-256, DH Group 14/19)
-/ip ipsec profile add name=gcp-ikev2-profile dh-group=modp2048,ecp256 enc-algorithm=aes-256 hash-algorithm=sha256 prf-algorithm=sha256 lifetime=1d nat-traversal=yes
-/ip ipsec proposal add name=gcp-ipsec-prop auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=8h pfs-group=modp2048
+# 1. IPsec Proposals & Profiles
+/ip/ipsec/profile/add name=gcp dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h nat-traversal=yes dpd-interval=8s dpd-maximum-failures=4
+/ip/ipsec/proposal/add name=gcp auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h pfs-group=modp2048
 
-# 3. IPsec Peer (Connect to GCP CHR Static Public IP: 34.101.118.166)
-/ip ipsec peer add name=peer-gcp-chr address=34.101.118.166/32 profile=gcp-ikev2-profile exchange-mode=ike2
+/ip/ipsec/profile/add name=azure dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h nat-traversal=yes dpd-interval=8s dpd-maximum-failures=4
+/ip/ipsec/proposal/add name=azure auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h pfs-group=modp2048
 
-# 4. IPsec Identity (Pre-Shared Key)
-/ip ipsec identity add peer=peer-gcp-chr auth-method=pre-shared-key secret="YOUR_STRONG_PRESHARED_KEY"
+/ip/ipsec/profile/add name=aws dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h nat-traversal=yes dpd-interval=8s dpd-maximum-failures=4
+/ip/ipsec/proposal/add name=aws auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h pfs-group=modp2048
 
-# 5. IPIP / GRE Tunnel Interface over IPsec
-/interface ipip add name=ipip-to-gcp local-address=10.151.127.250 remote-address=34.101.118.166 ipsec-secret="YOUR_STRONG_PRESHARED_KEY" allow-fast-path=no comment="Tunnel to GCP CHR"
-/ip address add address=10.254.254.1/30 interface=ipip-to-gcp network=10.254.254.0
+# 2. IPsec Peers & Identities
+/ip/ipsec/peer/add name=gcp address=__GCP_PUBLIC_IP__/32 local-address=__ALI_PEERING_IP__ profile=gcp exchange-mode=ike2 send-initial-contact=yes
+/ip/ipsec/identity/add peer=gcp auth-method=pre-shared-key secret="__IPSEC_PSK_ALI_GCP__" remote-id=ignore generate-policy=no
 
-# 6. BGP Configuration (RouterOS v7)
-# Alibaba CHR ASN: 65534 | GCP CHR ASN: 65535
-/routing bgp template set default disabled=no as=65534 router-id=10.151.127.250
-/routing bgp connection add name=bgp-to-gcp as=65534 remote.address=10.254.254.2/32 remote.as=65535 local.role=ebgp local.address=10.254.254.1 templates=default connect=yes listen=yes output.network=10.151.64.0/18
+/ip/ipsec/peer/add name=azure address=__AZURE_PUBLIC_IP__/32 local-address=__ALI_PEERING_IP__ profile=azure exchange-mode=ike2 send-initial-contact=yes
+/ip/ipsec/identity/add peer=azure auth-method=pre-shared-key secret="__IPSEC_PSK_AZURE_ALI__" remote-id=ignore generate-policy=no
 
-# 7. NAT & Forwarding Rules
-# Masquerade outbound internet traffic for spoke VPCs
-/ip firewall nat add chain=srcnat out-interface=ether1-peering-wan action=masquerade comment="NAT Egress Internet"
+/ip/ipsec/peer/add name=aws address=__AWS_PUBLIC_IP__/32 local-address=__ALI_PEERING_IP__ profile=aws exchange-mode=ike2 send-initial-contact=yes
+/ip/ipsec/identity/add peer=aws auth-method=pre-shared-key secret="__IPSEC_PSK_AWS_ALI__" remote-id=ignore generate-policy=no
 
-# Bypass NAT for cross-cloud traffic to GCP (10.101.0.0/16)
-/ip firewall nat add chain=srcnat dst-address=10.101.0.0/16 action=accept place-before=0 comment="Do NOT NAT traffic to GCP"
+# 3. IPsec Policies
+/ip/ipsec/policy/add peer=gcp tunnel=yes src-address=__ALI_PEERING_IP__/32 dst-address=__GCP_PEERING_IP__/32 protocol=gre action=encrypt proposal=gcp
+/ip/ipsec/policy/add peer=azure tunnel=yes src-address=__ALI_PEERING_IP__/32 dst-address=__AZURE_PEERING_IP__/32 protocol=gre action=encrypt proposal=azure
+/ip/ipsec/policy/add peer=aws tunnel=yes src-address=__ALI_PEERING_IP__/32 dst-address=__AWS_PEERING_IP__/32 protocol=gre action=encrypt proposal=aws
+
+# 4. GRE Interfaces & Addressing
+/interface/gre/add name=gre-gcp mtu=__TUNNEL_MTU__ local-address=__ALI_PEERING_IP__ remote-address=__GCP_PEERING_IP__ clamp-tcp-mss=yes dont-fragment=no allow-fast-path=no
+/interface/gre/add name=gre-azure mtu=__TUNNEL_MTU__ local-address=__ALI_PEERING_IP__ remote-address=__AZURE_PEERING_IP__ clamp-tcp-mss=yes dont-fragment=no allow-fast-path=no
+/interface/gre/add name=gre-aws mtu=__TUNNEL_MTU__ local-address=__ALI_PEERING_IP__ remote-address=__AWS_PEERING_IP__ clamp-tcp-mss=yes dont-fragment=no allow-fast-path=no
+
+/ip/address/add address=__ALI_GCP_TUNNEL_ALI_IP__/30 network=__ALI_GCP_TUNNEL_NETWORK__ interface=gre-gcp
+/ip/address/add address=__AZURE_ALI_TUNNEL_ALI_IP__/30 network=__AZURE_ALI_TUNNEL_NETWORK__ interface=gre-azure
+/ip/address/add address=__AWS_ALI_TUNNEL_ALI_IP__/30 network=__AWS_ALI_TUNNEL_NETWORK__ interface=gre-aws
+
+# 5. Address Lists & Static Anchor Routes
+/ip/firewall/address-list/add list=ali-advertise address=__ALI_SUPERNET__ comment="spoke nextops-vpc"
+/ip/firewall/address-list/add list=ali-advertise address=__GCP_SUPERNET__ comment="gcp-transit"
+/ip/firewall/address-list/add list=ali-advertise address=__AZURE_SUPERNET__ comment="azure-transit"
+/ip/firewall/address-list/add list=ali-advertise address=__AWS_SUPERNET__ comment="aws-transit"
+
+/ip/firewall/address-list/add list=cloud address=__GCP_SUPERNET__ comment="gcp"
+/ip/firewall/address-list/add list=cloud address=__AZURE_SUPERNET__ comment="azure"
+/ip/firewall/address-list/add list=cloud address=__AWS_SUPERNET__ comment="aws"
+
+/ip/route/add dst-address=__ALI_SUPERNET__ gateway=10.151.10.253 comment="nextops-vpc supernet"
+
+# 6. Mangle (MSS Clamping) & NAT
+/ip/firewall/mangle/add chain=forward action=change-mss new-mss=__TUNNEL_MSS__ passthrough=yes tcp-flags=syn protocol=tcp tcp-mss=1361-65535 comment="clamp MSS for tunnel traffic"
+/ip/firewall/nat/add chain=srcnat action=masquerade dst-address-list=!cloud out-interface=ether1 comment="NAT private subnet to the internet, never to the peer"
+
+# 7. Routing Filter Rules (Distance 20 for direct, Distance 30 for transit)
+/routing/filter/rule/add chain=gcp-out rule="if (dst in __ALI_SUPERNET__ || dst in __AZURE_SUPERNET__ || dst in __AWS_SUPERNET__) { accept } reject"
+/routing/filter/rule/add chain=azure-out rule="if (dst in __ALI_SUPERNET__ || dst in __GCP_SUPERNET__ || dst in __AWS_SUPERNET__) { accept } reject"
+/routing/filter/rule/add chain=aws-out rule="if (dst in __ALI_SUPERNET__ || dst in __GCP_SUPERNET__ || dst in __AZURE_SUPERNET__) { accept } reject"
+
+/routing/filter/rule/add chain=gcp-in rule="if (dst == 0.0.0.0/0 || dst in __GCP_PUBLIC_IP__/32 || dst in __ALI_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __GCP_SUPERNET__) { set distance 20; accept } else { if (dst in __AZURE_SUPERNET__ || dst in __AWS_SUPERNET__) { set distance 30; accept } reject } }"
+/routing/filter/rule/add chain=azure-in rule="if (dst == 0.0.0.0/0 || dst in __AZURE_PUBLIC_IP__/32 || dst in __AZURE_ALI_TUNNEL_NETWORK__/30) { reject } else { if (dst in __AZURE_SUPERNET__) { set distance 20; accept } else { if (dst in __GCP_SUPERNET__ || dst in __AWS_SUPERNET__) { set distance 30; accept } reject } }"
+/routing/filter/rule/add chain=aws-in rule="if (dst == 0.0.0.0/0 || dst in __AWS_PUBLIC_IP__/32 || dst in __AWS_ALI_TUNNEL_NETWORK__/30) { reject } else { if (dst in __AWS_SUPERNET__) { set distance 20; accept } else { if (dst in __GCP_SUPERNET__ || dst in __AZURE_SUPERNET__) { set distance 30; accept } reject } }"
+
+# 8. Dynamic eBGP Configuration
+/routing/bgp/instance/add name=gcp as=__ALI_ASN__ router-id=__ALI_PEERING_IP__
+/routing/bgp/template/add name=gcp as=__ALI_ASN__
+/routing/bgp/connection/add name=chr-gcp instance=gcp remote.address=__ALI_GCP_TUNNEL_GCP_IP__/32 .as=__GCP_ASN__ local.address=__ALI_GCP_TUNNEL_ALI_IP__ .role=ebgp routing-table=main templates=gcp as=__ALI_ASN__ output.network=ali-advertise output.filter-chain=gcp-out input.filter=gcp-in output.redistribute=bgp
+
+/routing/bgp/instance/add name=azure as=__ALI_ASN__ router-id=__ALI_PEERING_IP__
+/routing/bgp/template/add name=azure as=__ALI_ASN__
+/routing/bgp/connection/add name=chr-azure instance=azure remote.address=__AZURE_ALI_TUNNEL_AZURE_IP__/32 .as=__AZURE_ASN__ local.address=__AZURE_ALI_TUNNEL_ALI_IP__ .role=ebgp routing-table=main templates=azure as=__ALI_ASN__ output.network=ali-advertise output.filter-chain=azure-out input.filter=azure-in output.redistribute=bgp
+
+/routing/bgp/instance/add name=aws as=__ALI_ASN__ router-id=__ALI_PEERING_IP__
+/routing/bgp/template/add name=aws as=__ALI_ASN__
+/routing/bgp/connection/add name=chr-aws instance=aws remote.address=__AWS_ALI_TUNNEL_AWS_IP__/32 .as=__AWS_ASN__ local.address=__AWS_ALI_TUNNEL_ALI_IP__ .role=ebgp routing-table=main templates=aws as=__ALI_ASN__ output.network=ali-advertise output.filter-chain=aws-out input.filter=aws-in output.redistribute=bgp

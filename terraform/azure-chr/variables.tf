@@ -88,6 +88,12 @@ variable "aliyun_chr_public_ip" {
   default     = "8.215.24.90"
 }
 
+variable "aws_chr_public_ip" {
+  type        = string
+  description = "AWS CHR Public Elastic IP"
+  default     = "52.76.246.237"
+}
+
 variable "disk_encryption_set_name" {
   type        = string
   description = "Name of the Disk Encryption Set for CMK"
