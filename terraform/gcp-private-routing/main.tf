@@ -40,3 +40,13 @@ resource "google_compute_route" "route_to_azure" {
   priority    = var.route_priority
   description = "Route to Azure VNet via MikroTik CHR private interface (nic1)"
 }
+
+resource "google_compute_route" "route_to_aws" {
+  name        = "rt-nextops-to-aws-via-chr"
+  dest_range  = var.aws_vpc_cidr
+  network     = data.google_compute_network.vpc.name
+  project     = var.project_id
+  next_hop_ip = var.chr_workload_nic_ip
+  priority    = var.route_priority
+  description = "Route to AWS VPC via MikroTik CHR private interface (nic1)"
+}

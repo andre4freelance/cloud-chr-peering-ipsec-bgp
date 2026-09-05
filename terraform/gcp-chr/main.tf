@@ -62,12 +62,12 @@ resource "google_compute_firewall" "nic0_allow_mgmt" {
   target_tags   = ["gcp-chr-peering-nic0"]
 }
 
-# Allow IPsec IKEv2 (UDP 500), NAT-T (UDP 4500), and GRE (47) from Alibaba CHR Public EIP
+# Allow IPsec IKEv2 (UDP 500), NAT-T (UDP 4500), and GRE (47) from Multi-Cloud CHR Public IPs
 resource "google_compute_firewall" "nic0_allow_ipsec" {
   name        = "${var.instance_name}-nic0-allow-ipsec"
   network     = data.google_compute_network.vpc.name
   project     = var.project_id
-  description = "Dedicated nic0: Allow IPsec, NAT-T, and GRE from Alibaba CHR EIP"
+  description = "Dedicated nic0: Allow IPsec, NAT-T, and GRE from Alibaba, Azure, and AWS CHR Public IPs"
 
   allow {
     protocol = "udp"
@@ -78,7 +78,11 @@ resource "google_compute_firewall" "nic0_allow_ipsec" {
     protocol = "47"
   }
 
-  source_ranges = ["${var.alibaba_chr_public_ip}/32"]
+  source_ranges = [
+    "${var.alibaba_chr_public_ip}/32",
+    "${var.azure_chr_public_ip}/32",
+    "${var.aws_chr_public_ip}/32"
+  ]
   target_tags   = ["gcp-chr-peering-nic0"]
 }
 
@@ -89,7 +93,7 @@ resource "google_compute_firewall" "nic1_allow_internal_vpc" {
   name        = "${var.instance_name}-nic1-allow-internal-vpc"
   network     = data.google_compute_network.vpc.name
   project     = var.project_id
-  description = "Dedicated nic1: Allow internal VPC, Alibaba VPC, and Azure VNet traffic"
+  description = "Dedicated nic1: Allow internal VPC, Alibaba VPC, Azure VNet, and AWS VPC traffic"
 
   allow {
     protocol = "all"
@@ -99,7 +103,8 @@ resource "google_compute_firewall" "nic1_allow_internal_vpc" {
     "10.101.0.0/16",          # Entire GCP Shared VPC Supernet
     var.alibaba_vpc_cidr,      # Alibaba Cloud Hub VPC (10.151.64.0/18)
     var.alibaba_spoke_vpc_cidr,# Alibaba Cloud Spoke VPC (10.151.0.0/18)
-    var.azure_vnet_cidr        # Azure VNet Supernet (10.126.0.0/18)
+    var.azure_vnet_cidr,       # Azure VNet Supernet (10.126.0.0/18)
+    var.aws_vpc_cidr           # AWS VPC Supernet (10.29.0.0/18)
   ]
   target_tags = ["gcp-chr-workload-nic1"]
 }

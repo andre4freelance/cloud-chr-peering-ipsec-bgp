@@ -46,6 +46,12 @@ variable "azure_vnet_cidr" {
   default     = "10.126.0.0/18"
 }
 
+variable "aws_vpc_cidr" {
+  type        = string
+  description = "Amazon Web Services (AWS) VPC Supernet CIDR"
+  default     = "10.29.0.0/18"
+}
+
 variable "route_priority" {
   type        = number
   description = "Priority for the custom static routes"

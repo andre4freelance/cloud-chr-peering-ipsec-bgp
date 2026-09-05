@@ -108,3 +108,21 @@ variable "azure_vnet_cidr" {
   type        = string
   default     = "10.126.0.0/18"
 }
+
+variable "azure_chr_public_ip" {
+  description = "Azure CHR Public IP for IPsec peering"
+  type        = string
+  default     = "70.153.184.179"
+}
+
+variable "aws_chr_public_ip" {
+  description = "AWS CHR Public Elastic IP for IPsec peering"
+  type        = string
+  default     = "52.76.246.237"
+}
+
+variable "aws_vpc_cidr" {
+  description = "AWS VPC Supernet CIDR block"
+  type        = string
+  default     = "10.29.0.0/18"
+}

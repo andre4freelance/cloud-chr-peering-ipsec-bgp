@@ -8,6 +8,11 @@ output "route_to_azure_id" {
   value       = google_compute_route.route_to_azure.id
 }
 
+output "route_to_aws_id" {
+  description = "The ID of the route to AWS"
+  value       = google_compute_route.route_to_aws.id
+}
+
 output "next_hop_chr_private_ip" {
   description = "The Next Hop IP (CHR nic1 private interface)"
   value       = var.chr_workload_nic_ip
