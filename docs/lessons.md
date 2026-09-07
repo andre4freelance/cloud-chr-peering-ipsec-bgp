@@ -312,3 +312,20 @@ When deploying a Multi-NIC NVA / CHR on Alibaba Cloud across multiple vSwitches 
 Running `/ping <remote-ip>` or `/tool/fetch` from RouterOS without specifying `src-address` causes RouterOS to source packets from the point-to-point `/30` link-local interface IP (`169.254.x.x`). Remote cloud VMs have UDRs only for the advertised VPC supernets (`10.151.0.0/18`) and drop replies to unroutable `169.254.x.x` addresses.
 **Fix:** Always test with `src-address=<LAN_IP>` or `src-address=<WAN_IP>`, or verify directly from workload VMs.
 
+## 14. AWS Jumbo Frames (MTU 9001) vs Tunnel Path MTU: Dynamic MSS Clamping Mandatory (2026-09-07)
+
+When peering an AWS VPC with on-prem or multi-cloud environments via MikroTik CHR NVA:
+1. **EC2 Default MTU is 9001 (Jumbo Frame):**
+   Within an AWS VPC, EC2 instances negotiate Jumbo Frames (MTU 9001). When communicating over an IPsec + GRE overlay tunnel (outer MTU 1500 -> inner MTU ~1400), packets exceeding the tunnel MTU must either fragment or have their TCP MSS clamped.
+2. **Static vs Dynamic Clamping Failure Mode:**
+   Static clamping (`new-mss=1360`) can fail when outer encapsulations vary or client applications send large bulk payloads (e.g. database query result sets). If ICMP Frag Needed / PMTUD messages are dropped, a PMTUD blackhole occurs, creating intermittent 30-40% packet loss and 1-2 second latency spikes during handshakes.
+3. **Misleading Diagnostic Traps:**
+   - **Overlay BGP Next-Hop Confusion:** `169.254.x.x` next-hop in BGP routes is the internal address of the GRE tunnel itself, not a separate physical VPN/DX path.
+   - **Unspecified Ping Source:** Testing `/ping <remote-ip>` directly on CHR defaults to the WAN interface IP, which remote cloud NSGs drop by design.
+4. **Fix:**
+   Configure dynamic MSS clamping on the forward chain of RouterOS:
+   ```routeros
+   /ip firewall mangle
+   add chain=forward action=change-mss new-mss=clamp-to-pmtu passthrough=yes protocol=tcp tcp-flags=syn tcp-mss=1300-65535 comment="clamp-to-pmtu"
+   ```
+
