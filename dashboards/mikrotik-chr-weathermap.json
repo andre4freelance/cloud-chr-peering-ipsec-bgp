@@ -1,0 +1,1041 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 3087715715231744,
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "afvwy8fsbq0hsa"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": 0
+              },
+              {
+                "color": "#FADE2A",
+                "value": 50000000
+              },
+              {
+                "color": "#F2495C",
+                "value": 80000000
+              }
+            ]
+          },
+          "unit": "bps"
+        }
+      },
+      "gridPos": {
+        "h": 20,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "inlineEditing": true,
+        "panZoom": false,
+        "root": {
+          "background": {
+            "color": {
+              "fixed": "transparent"
+            }
+          },
+          "border": {
+            "color": {
+              "fixed": "dark-green"
+            }
+          },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
+          "elements": [
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "fill": {
+                  "fixed": "#5794F2"
+                },
+                "path": {
+                  "fixed": "img/icons/unicons/compass.svg"
+                }
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "Value #rate_gcp_ali",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 879.990234375,
+                    "y": 97.990234375
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-aliyun-jkt",
+                  "targetOriginal": {
+                    "x": 660.986328125,
+                    "y": 255.978515625
+                  }
+                },
+                {
+                  "color": {
+                    "field": "Value #rate_gcp_azure",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 879.990234375,
+                    "y": 97.990234375
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-azure-jkt",
+                  "targetOriginal": {
+                    "x": 743.994140625,
+                    "y": 513.986328125
+                  }
+                },
+                {
+                  "color": {
+                    "field": "Value #rate_gcp_awssg",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 879.990234375,
+                    "y": 97.990234375
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-aws-sg",
+                  "targetOriginal": {
+                    "x": 1097.978515625,
+                    "y": 255.978515625
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "chr-gcp-jkt",
+              "name": "chr-gcp-jkt",
+              "placement": {
+                "height": 47.98828125,
+                "left": 856,
+                "top": 74,
+                "width": 47.98828125
+              },
+              "type": "icon"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#161A1E"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#3274D9"
+                },
+                "width": 1.5
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#FFFFFF"
+                },
+                "size": 13,
+                "text": {
+                  "fixed": "chr-gcp-jkt"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "label_chr-gcp-jkt",
+              "name": "label_chr-gcp-jkt",
+              "placement": {
+                "height": 25.99609375,
+                "left": 815,
+                "top": 38,
+                "width": 130
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "fill": {
+                  "fixed": "#5794F2"
+                },
+                "path": {
+                  "fixed": "img/icons/unicons/compass.svg"
+                }
+              },
+              "connections": [],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "chr-aws-sg",
+              "name": "chr-aws-sg",
+              "placement": {
+                "height": 47.98828125,
+                "left": 1074,
+                "top": 232,
+                "width": 47.98828125
+              },
+              "type": "icon"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#161A1E"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#3274D9"
+                },
+                "width": 1.5
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#FFFFFF"
+                },
+                "size": 13,
+                "text": {
+                  "fixed": "chr-aws-sg"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "label_chr-aws-sg",
+              "name": "label_chr-aws-sg",
+              "placement": {
+                "height": 25.99609375,
+                "left": 1133,
+                "top": 243,
+                "width": 130
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "fill": {
+                  "fixed": "#5794F2"
+                },
+                "path": {
+                  "fixed": "img/icons/unicons/compass.svg"
+                }
+              },
+              "connections": [],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "chr-aws-jkt",
+              "name": "chr-aws-jkt",
+              "placement": {
+                "height": 47.98828125,
+                "left": 991,
+                "top": 490,
+                "width": 47.98828125
+              },
+              "type": "icon"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#161A1E"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#3274D9"
+                },
+                "width": 1.5
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#FFFFFF"
+                },
+                "size": 13,
+                "text": {
+                  "fixed": "chr-aws-jkt"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "label_chr-aws-jkt",
+              "name": "label_chr-aws-jkt",
+              "placement": {
+                "height": 25.99609375,
+                "left": 950,
+                "top": 544,
+                "width": 130
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "fill": {
+                  "fixed": "#5794F2"
+                },
+                "path": {
+                  "fixed": "img/icons/unicons/compass.svg"
+                }
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "Value #rate_azure_awssg",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 743.994140625,
+                    "y": 513.986328125
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-aws-sg",
+                  "targetOriginal": {
+                    "x": 1097.978515625,
+                    "y": 255.978515625
+                  }
+                },
+                {
+                  "color": {
+                    "field": "Value #rate_azure_awsjkt",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 743.994140625,
+                    "y": 513.986328125
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-aws-jkt",
+                  "targetOriginal": {
+                    "x": 1014.990234375,
+                    "y": 514.986328125
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "chr-azure-jkt",
+              "name": "chr-azure-jkt",
+              "placement": {
+                "height": 47.98828125,
+                "left": 720,
+                "top": 490,
+                "width": 47.98828125
+              },
+              "type": "icon"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#161A1E"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#3274D9"
+                },
+                "width": 1.5
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#FFFFFF"
+                },
+                "size": 13,
+                "text": {
+                  "fixed": "chr-azure-jkt"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "label_chr-azure-jkt",
+              "name": "label_chr-azure-jkt",
+              "placement": {
+                "height": 25.99609375,
+                "left": 679,
+                "top": 544,
+                "width": 130
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "fill": {
+                  "fixed": "#5794F2"
+                },
+                "path": {
+                  "fixed": "img/icons/unicons/compass.svg"
+                }
+              },
+              "connections": [
+                {
+                  "color": {
+                    "field": "Value #rate_ali_azure",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 660.986328125,
+                    "y": 255.978515625
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-azure-jkt",
+                  "targetOriginal": {
+                    "x": 743.994140625,
+                    "y": 513.986328125
+                  }
+                },
+                {
+                  "color": {
+                    "field": "Value #rate_ali_awssg",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 660.986328125,
+                    "y": 255.978515625
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-aws-sg",
+                  "targetOriginal": {
+                    "x": 1097.978515625,
+                    "y": 256.978515625
+                  }
+                }
+              ],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "chr-aliyun-jkt",
+              "name": "chr-aliyun-jkt",
+              "placement": {
+                "height": 47.98828125,
+                "left": 637,
+                "top": 232,
+                "width": 47.98828125
+              },
+              "type": "icon"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#161A1E"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#3274D9"
+                },
+                "width": 1.5
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#FFFFFF"
+                },
+                "size": 13,
+                "text": {
+                  "fixed": "chr-aliyun-jkt"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "label_chr-aliyun-jkt",
+              "name": "label_chr-aliyun-jkt",
+              "placement": {
+                "height": 25.99609375,
+                "left": 496,
+                "top": 243,
+                "width": 130
+              },
+              "type": "text"
+            }
+          ],
+          "name": "Element 1788866821423",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "rotation": 0,
+            "top": 0,
+            "width": 100
+          }
+        },
+        "showAdvancedTypes": true,
+        "showThresholds": true,
+        "tooltip": {
+          "disableForOneClick": false,
+          "mode": "single"
+        },
+        "zoomToContent": false
+      },
+      "pluginVersion": "13.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-ali\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "GCP <-> Aliyun",
+          "refId": "rate_gcp_ali"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-azure\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-azure\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "GCP <-> Azure",
+          "refId": "rate_gcp_azure"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-aws\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-aws\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "GCP <-> AWS SG",
+          "refId": "rate_gcp_awssg"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-azure-jkt\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-azure-jkt\", ifName=\"gre-ali\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Aliyun <-> Azure",
+          "refId": "rate_ali_azure"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-aws-sg\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aws-sg\", ifName=\"gre-ali\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Aliyun <-> AWS SG",
+          "refId": "rate_ali_awssg"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-azure-jkt\", ifName=\"gre-aws\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-azure-jkt\", ifName=\"gre-aws\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Azure <-> AWS SG",
+          "refId": "rate_azure_awssg"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-aws-jkt\", ifName=\"gre-azure\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aws-jkt\", ifName=\"gre-azure\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Azure <-> AWS JKT",
+          "refId": "rate_azure_awsjkt"
+        }
+      ],
+      "title": "Multi-Cloud Network Weathermap",
+      "type": "canvas"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "afvwy8fsbq0hsa"
+      },
+      "description": "Real-time download rate for the selected GRE tunnel.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        }
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "rate(ifHCInOctets{instance=\"$instance\", ifName=\"$interface\"}[1m]) * 8",
+          "legendFormat": "{{instance}} [{{ifName}}] Inbound",
+          "refId": "Inbound"
+        }
+      ],
+      "title": "Tunnel Inbound Bandwidth Rate (Download) - $instance [$interface]",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "afvwy8fsbq0hsa"
+      },
+      "description": "Real-time upload rate for the selected GRE tunnel.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        }
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "rate(ifHCOutOctets{instance=\"$instance\", ifName=\"$interface\"}[1m]) * 8",
+          "legendFormat": "{{instance}} [{{ifName}}] Outbound",
+          "refId": "Outbound"
+        }
+      ],
+      "title": "Tunnel Outbound Bandwidth Rate (Upload) - $instance [$interface]",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "10s",
+  "schemaVersion": 42,
+  "tags": [
+    "mikrotik",
+    "chr",
+    "network",
+    "weathermap",
+    "topology"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allowCustomValue": true,
+        "current": {
+          "text": "chr-gcp-jkt",
+          "value": "chr-gcp-jkt"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "afvwy8fsbq0hsa"
+        },
+        "definition": "query_result(up{job=\"snmp-chr\", instance=~\"chr-.*-.*\"} == 1)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Router Instance",
+        "multi": false,
+        "name": "instance",
+        "options": [],
+        "query": {
+          "query": "query_result(up{job=\"snmp-chr\", instance=~\"chr-.*-.*\"} == 1)",
+          "refId": "InstanceVar"
+        },
+        "refresh": 1,
+        "regex": "/instance=\"([^\"]+)\"/",
+        "regexApplyTo": "value",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": true,
+        "current": {
+          "text": "gre-ali",
+          "value": "gre-ali"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "afvwy8fsbq0hsa"
+        },
+        "definition": "label_values(ifHCInOctets{instance=\"$instance\", ifName!=\"lo\"}, ifName)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "GRE Tunnel Interface",
+        "multi": false,
+        "name": "interface",
+        "options": [],
+        "query": {
+          "query": "label_values(ifHCInOctets{instance=\"$instance\", ifName!=\"lo\"}, ifName)",
+          "refId": "InterfaceVar"
+        },
+        "refresh": 2,
+        "regex": "/(gre-.*)/",
+        "regexApplyTo": "value",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "MikroTik CHR - Multi-Cloud Network Weathermap",
+  "uid": "mikrotik-chr-weathermap",
+  "version": 11
+}
