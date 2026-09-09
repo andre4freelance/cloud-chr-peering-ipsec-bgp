@@ -299,7 +299,7 @@
       "id": 7,
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center"
       },
       "pluginVersion": "",
@@ -349,7 +349,7 @@
       "id": 8,
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center"
       },
       "pluginVersion": "",
@@ -398,7 +398,7 @@
       "id": 9,
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "center"
       },
       "pluginVersion": "",
@@ -957,5 +957,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Overview",
   "uid": "mikrotik-chr-overview",
-  "version": 13
+  "version": 14
 }
