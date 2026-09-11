@@ -882,8 +882,8 @@
       {
         "allowCustomValue": true,
         "current": {
-          "text": "chr-gcp-jkt",
-          "value": "chr-gcp-jkt"
+          "text": "chr-aliyun-jkt",
+          "value": "chr-aliyun-jkt"
         },
         "datasource": {
           "type": "prometheus",
@@ -957,5 +957,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Overview",
   "uid": "mikrotik-chr-overview",
-  "version": 15
+  "version": 16
 }

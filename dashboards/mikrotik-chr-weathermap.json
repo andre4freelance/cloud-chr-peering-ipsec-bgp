@@ -119,7 +119,7 @@
                     "x": 0,
                     "y": 0
                   },
-                  "targetName": "chr-aliyun-nextops",
+                  "targetName": "chr-aliyun-jkt",
                   "targetOriginal": {
                     "x": 660.986328125,
                     "y": 255.986328125
@@ -629,8 +629,8 @@
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "id": "chr-aliyun-nextops",
-              "name": "chr-aliyun-nextops",
+              "id": "chr-aliyun-jkt",
+              "name": "chr-aliyun-jkt",
               "placement": {
                 "height": 47.98828125,
                 "left": 637,
@@ -658,15 +658,15 @@
                 },
                 "size": 13,
                 "text": {
-                  "fixed": "chr-aliyun-nextops"
+                  "fixed": "chr-aliyun-nextops (jkt)"
                 }
               },
               "constraint": {
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "id": "label_chr-aliyun-nextops",
-              "name": "label_chr-aliyun-nextops",
+              "id": "label_chr-aliyun-jkt",
+              "name": "label_chr-aliyun-jkt",
               "placement": {
                 "height": 26,
                 "left": 586,
@@ -774,7 +774,7 @@
           "expr": "max(rate(ifHCInOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-ali\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
-          "legendFormat": "GCP <-> Aliyun NextOps",
+          "legendFormat": "GCP <-> Aliyun",
           "refId": "rate_gcp_ali"
         },
         {
@@ -807,7 +807,7 @@
           "expr": "max(rate(ifHCInOctets{instance=\"chr-azure-jkt\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-azure-jkt\", ifName=\"gre-ali\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
-          "legendFormat": "Aliyun NextOps <-> Azure",
+          "legendFormat": "Aliyun <-> Azure",
           "refId": "rate_ali_azure"
         },
         {
@@ -818,7 +818,7 @@
           "expr": "max(rate(ifHCInOctets{instance=\"chr-aws-sg\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aws-sg\", ifName=\"gre-ali\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
-          "legendFormat": "Aliyun NextOps <-> AWS SG",
+          "legendFormat": "Aliyun <-> AWS SG",
           "refId": "rate_ali_awssg"
         },
         {
@@ -848,7 +848,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "max(rate(ifHCInOctets{instance=\"chr-aliyun-nextops\", ifName=\"gre-ms\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aliyun-nextops\", ifName=\"gre-ms\"}[1m]) * 8)",
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
           "legendFormat": "Aliyun NextOps <-> Aliyun MS",
@@ -1150,5 +1150,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Weathermap",
   "uid": "mikrotik-chr-weathermap",
-  "version": 16
+  "version": 18
 }
