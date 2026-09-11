@@ -30,7 +30,7 @@ variable "public_vswitch_ids" {
 
 variable "chr_private_eni_id" {
   type        = string
-  default     = "eni-k1ahx623o3hwm5j97ubx"
+  default     = "eni-k1a87p9li7far9mjj524"
   description = "Secondary ENI ID of MikroTik CHR in private subnet (10.151.74.100)"
 }
 
@@ -57,3 +57,22 @@ variable "azure_vnet_cidr" {
   default     = "10.126.0.0/18"
   description = "CIDR block of Microsoft Azure VNet"
 }
+
+variable "aliyun_spoke_vpc_cidr" {
+  type        = string
+  default     = "10.151.0.0/18"
+  description = "CIDR block of Alibaba Cloud NextOps Spoke VPC"
+}
+
+variable "aws_sin_vpc_cidr" {
+  type        = string
+  default     = "10.29.0.0/18"
+  description = "CIDR block of AWS Singapore VPC"
+}
+
+variable "aws_jkt_vpc_cidr" {
+  type        = string
+  default     = "172.19.0.0/16"
+  description = "CIDR block of AWS Jakarta Managed Service VPC"
+}
+

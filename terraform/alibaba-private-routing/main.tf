@@ -40,14 +40,18 @@ resource "alicloud_route_entry" "default_to_chr_eni" {
   destination_cidrblock = "0.0.0.0/0"
   nexthop_type          = "NetworkInterface"
   nexthop_id            = var.chr_private_eni_id
+  name                  = "default-via-chr"
+  description           = "Default 0.0.0.0/0 route to MikroTik CHR LAN ENI for internet egress"
 }
 
-# Route ke GCP VPC (10.101.0.0/18) -> MikroTik CHR Private ENI
+# Route ke GCP VPC (10.101.0.0/16) -> MikroTik CHR Private ENI
 resource "alicloud_route_entry" "private_to_gcp" {
   route_table_id        = alicloud_route_table.private_rt.id
   destination_cidrblock = var.gcp_vpc_cidr
   nexthop_type          = "NetworkInterface"
   nexthop_id            = var.chr_private_eni_id
+  name                  = "to-gcp-via-chr"
+  description           = "Route to GCP Shared VPC (10.101.0.0/16) via MikroTik CHR"
 }
 
 # Route ke Azure VNet (10.126.0.0/18) -> MikroTik CHR Private ENI
@@ -56,6 +60,38 @@ resource "alicloud_route_entry" "private_to_azure" {
   destination_cidrblock = var.azure_vnet_cidr
   nexthop_type          = "NetworkInterface"
   nexthop_id            = var.chr_private_eni_id
+  name                  = "to-azure-via-chr"
+  description           = "Route to Azure VNet (10.126.0.0/18) via MikroTik CHR"
+}
+
+# Route ke NextOps Spoke VPC (10.151.0.0/18) -> MikroTik CHR Private ENI
+resource "alicloud_route_entry" "private_to_aliyun_spoke" {
+  route_table_id        = alicloud_route_table.private_rt.id
+  destination_cidrblock = var.aliyun_spoke_vpc_cidr
+  nexthop_type          = "NetworkInterface"
+  nexthop_id            = var.chr_private_eni_id
+  name                  = "to-aliyun-nextops-via-chr"
+  description           = "Route to Alibaba NextOps VPC (10.151.0.0/18) via MikroTik CHR"
+}
+
+# Route ke AWS Singapore (10.29.0.0/18) -> MikroTik CHR Private ENI
+resource "alicloud_route_entry" "private_to_aws_sin" {
+  route_table_id        = alicloud_route_table.private_rt.id
+  destination_cidrblock = var.aws_sin_vpc_cidr
+  nexthop_type          = "NetworkInterface"
+  nexthop_id            = var.chr_private_eni_id
+  name                  = "to-aws-sin-via-chr"
+  description           = "Route to AWS Singapore VPC (10.29.0.0/18) via MikroTik CHR"
+}
+
+# Route ke AWS Jakarta Managed Service (172.19.0.0/16) -> MikroTik CHR Private ENI
+resource "alicloud_route_entry" "private_to_aws_jkt" {
+  route_table_id        = alicloud_route_table.private_rt.id
+  destination_cidrblock = var.aws_jkt_vpc_cidr
+  nexthop_type          = "NetworkInterface"
+  nexthop_id            = var.chr_private_eni_id
+  name                  = "to-aws-jkt-via-chr"
+  description           = "Route to AWS Jakarta MS VPC (172.19.0.0/16) via MikroTik CHR"
 }
 
 # ==============================================================================
@@ -87,12 +123,14 @@ resource "alicloud_route_table_attachment" "public_vswitch_attach" {
   route_table_id = alicloud_route_table.public_rt.id
 }
 
-# Route ke GCP VPC (10.101.0.0/18) -> MikroTik CHR Private ENI
+# Route ke GCP VPC (10.101.0.0/16) -> MikroTik CHR Private ENI
 resource "alicloud_route_entry" "public_to_gcp" {
   route_table_id        = alicloud_route_table.public_rt.id
   destination_cidrblock = var.gcp_vpc_cidr
   nexthop_type          = "NetworkInterface"
   nexthop_id            = var.chr_private_eni_id
+  name                  = "to-gcp-via-chr"
+  description           = "Route to GCP Shared VPC (10.101.0.0/16) via MikroTik CHR"
 }
 
 # Route ke Azure VNet (10.126.0.0/18) -> MikroTik CHR Private ENI
@@ -101,4 +139,37 @@ resource "alicloud_route_entry" "public_to_azure" {
   destination_cidrblock = var.azure_vnet_cidr
   nexthop_type          = "NetworkInterface"
   nexthop_id            = var.chr_private_eni_id
+  name                  = "to-azure-via-chr"
+  description           = "Route to Azure VNet (10.126.0.0/18) via MikroTik CHR"
 }
+
+# Route ke NextOps Spoke VPC (10.151.0.0/18) -> MikroTik CHR Private ENI
+resource "alicloud_route_entry" "public_to_aliyun_spoke" {
+  route_table_id        = alicloud_route_table.public_rt.id
+  destination_cidrblock = var.aliyun_spoke_vpc_cidr
+  nexthop_type          = "NetworkInterface"
+  nexthop_id            = var.chr_private_eni_id
+  name                  = "to-aliyun-nextops-via-chr"
+  description           = "Route to Alibaba NextOps VPC (10.151.0.0/18) via MikroTik CHR"
+}
+
+# Route ke AWS Singapore (10.29.0.0/18) -> MikroTik CHR Private ENI
+resource "alicloud_route_entry" "public_to_aws_sin" {
+  route_table_id        = alicloud_route_table.public_rt.id
+  destination_cidrblock = var.aws_sin_vpc_cidr
+  nexthop_type          = "NetworkInterface"
+  nexthop_id            = var.chr_private_eni_id
+  name                  = "to-aws-sin-via-chr"
+  description           = "Route to AWS Singapore VPC (10.29.0.0/18) via MikroTik CHR"
+}
+
+# Route ke AWS Jakarta Managed Service (172.19.0.0/16) -> MikroTik CHR Private ENI
+resource "alicloud_route_entry" "public_to_aws_jkt" {
+  route_table_id        = alicloud_route_table.public_rt.id
+  destination_cidrblock = var.aws_jkt_vpc_cidr
+  nexthop_type          = "NetworkInterface"
+  nexthop_id            = var.chr_private_eni_id
+  name                  = "to-aws-jkt-via-chr"
+  description           = "Route to AWS Jakarta MS VPC (172.19.0.0/16) via MikroTik CHR"
+}
+
