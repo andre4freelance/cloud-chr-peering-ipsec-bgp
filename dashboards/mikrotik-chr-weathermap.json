@@ -592,6 +592,37 @@
                     "x": 1097.978515625,
                     "y": 256.978515625
                   }
+                },
+                {
+                  "color": {
+                    "field": "Value #rate_ali_ms",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 660.986328125,
+                    "y": 255.978515625
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-aliyun-ms",
+                  "targetOriginal": {
+                    "x": 450,
+                    "y": 256
+                  }
                 }
               ],
               "constraint": {
@@ -641,6 +672,76 @@
                 "left": 496,
                 "top": 243,
                 "width": 130
+              },
+              "type": "text"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "fill": {
+                  "fixed": "#5794F2"
+                },
+                "path": {
+                  "fixed": "img/icons/unicons/compass.svg"
+                }
+              },
+              "connections": [],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "chr-aliyun-ms",
+              "name": "chr-aliyun-ms",
+              "placement": {
+                "height": 47.98828125,
+                "left": 426,
+                "top": 232,
+                "width": 47.98828125
+              },
+              "type": "icon"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "#161A1E"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#3274D9"
+                },
+                "width": 1.5
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#FFFFFF"
+                },
+                "size": 13,
+                "text": {
+                  "fixed": "chr-aliyun-ms"
+                }
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "id": "label_chr-aliyun-ms",
+              "name": "label_chr-aliyun-ms",
+              "placement": {
+                "height": 25.99609375,
+                "left": 395,
+                "top": 286,
+                "width": 110
               },
               "type": "text"
             }
@@ -740,6 +841,17 @@
           "instant": true,
           "legendFormat": "Azure <-> AWS JKT",
           "refId": "rate_azure_awsjkt"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Aliyun NextOps <-> Aliyun MS",
+          "refId": "rate_ali_ms"
         }
       ],
       "title": "Multi-Cloud Network Weathermap",
@@ -1037,5 +1149,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Weathermap",
   "uid": "mikrotik-chr-weathermap",
-  "version": 11
+  "version": 12
 }
