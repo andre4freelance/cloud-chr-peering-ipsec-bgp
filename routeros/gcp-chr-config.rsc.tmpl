@@ -61,9 +61,9 @@
 /routing/filter/rule/add chain=azure-out rule="if (dst in __GCP_SUPERNET__ || dst in __ALI_SUPERNET__ || dst in __AWS_SUPERNET__) { accept } reject"
 /routing/filter/rule/add chain=aws-out rule="if (dst in __GCP_SUPERNET__ || dst in __ALI_SUPERNET__ || dst in __AZURE_SUPERNET__) { accept } reject"
 
-/routing/filter/rule/add chain=ali-in rule="if (dst == 0.0.0.0/0 || dst in __ALI_PUBLIC_IP__/32 || dst in __ALI_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __ALI_SUPERNET__) { set distance 20; accept } else { if (dst in __AZURE_SUPERNET__ || dst in __AWS_SUPERNET__) { set distance 30; accept } reject } }"
-/routing/filter/rule/add chain=azure-in rule="if (dst == 0.0.0.0/0 || dst in __AZURE_PUBLIC_IP__/32 || dst in __AZURE_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __AZURE_SUPERNET__) { set distance 20; accept } else { if (dst in __ALI_SUPERNET__ || dst in __AWS_SUPERNET__) { set distance 30; accept } reject } }"
-/routing/filter/rule/add chain=aws-in rule="if (dst == 0.0.0.0/0 || dst in __AWS_PUBLIC_IP__/32 || dst in __AWS_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __AWS_SUPERNET__) { set distance 20; accept } else { if (dst in __ALI_SUPERNET__ || dst in __AZURE_SUPERNET__) { set distance 30; accept } reject } }"
+/routing/filter/rule/add chain=ali-in rule="if (dst == 0.0.0.0/0 || dst in __ALI_PUBLIC_IP__/32 || dst in __ALI_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __ALI_SUPERNET__) { set distance 20; set pref-src __GCP_PRIVATE_IP__; accept } else { if (dst in __AZURE_SUPERNET__ || dst in __AWS_SUPERNET__) { set distance 30; set pref-src __GCP_PRIVATE_IP__; accept } reject } }"
+/routing/filter/rule/add chain=azure-in rule="if (dst == 0.0.0.0/0 || dst in __AZURE_PUBLIC_IP__/32 || dst in __AZURE_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __AZURE_SUPERNET__) { set distance 20; set pref-src __GCP_PRIVATE_IP__; accept } else { if (dst in __ALI_SUPERNET__ || dst in __AWS_SUPERNET__) { set distance 30; set pref-src __GCP_PRIVATE_IP__; accept } reject } }"
+/routing/filter/rule/add chain=aws-in rule="if (dst == 0.0.0.0/0 || dst in __AWS_PUBLIC_IP__/32 || dst in __AWS_GCP_TUNNEL_NETWORK__/30) { reject } else { if (dst in __AWS_SUPERNET__) { set distance 20; set pref-src __GCP_PRIVATE_IP__; accept } else { if (dst in __ALI_SUPERNET__ || dst in __AZURE_SUPERNET__) { set distance 30; set pref-src __GCP_PRIVATE_IP__; accept } reject } }"
 
 # 8. Dynamic eBGP Configuration
 /routing/bgp/instance/add name=ali as=__GCP_ASN__ router-id=__GCP_PEERING_IP__
