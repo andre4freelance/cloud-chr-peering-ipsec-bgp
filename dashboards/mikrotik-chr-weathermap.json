@@ -113,16 +113,16 @@
                   },
                   "sourceOriginal": {
                     "x": 879.990234375,
-                    "y": 97.990234375
+                    "y": 97.978515625
                   },
                   "target": {
                     "x": 0,
                     "y": 0
                   },
-                  "targetName": "chr-aliyun-jkt",
+                  "targetName": "chr-aliyun-nextops",
                   "targetOriginal": {
                     "x": 660.986328125,
-                    "y": 255.978515625
+                    "y": 255.986328125
                   }
                 },
                 {
@@ -144,7 +144,7 @@
                   },
                   "sourceOriginal": {
                     "x": 879.990234375,
-                    "y": 97.990234375
+                    "y": 97.978515625
                   },
                   "target": {
                     "x": 0,
@@ -153,7 +153,7 @@
                   "targetName": "chr-azure-jkt",
                   "targetOriginal": {
                     "x": 743.994140625,
-                    "y": 513.986328125
+                    "y": 513.994140625
                   }
                 },
                 {
@@ -175,7 +175,7 @@
                   },
                   "sourceOriginal": {
                     "x": 879.990234375,
-                    "y": 97.990234375
+                    "y": 97.978515625
                   },
                   "target": {
                     "x": 0,
@@ -184,7 +184,7 @@
                   "targetName": "chr-aws-sg",
                   "targetOriginal": {
                     "x": 1097.978515625,
-                    "y": 255.978515625
+                    "y": 255.986328125
                   }
                 }
               ],
@@ -417,7 +417,7 @@
                   },
                   "sourceOriginal": {
                     "x": 743.994140625,
-                    "y": 513.986328125
+                    "y": 513.994140625
                   },
                   "target": {
                     "x": 0,
@@ -426,7 +426,7 @@
                   "targetName": "chr-aws-sg",
                   "targetOriginal": {
                     "x": 1097.978515625,
-                    "y": 255.978515625
+                    "y": 255.986328125
                   }
                 },
                 {
@@ -448,7 +448,7 @@
                   },
                   "sourceOriginal": {
                     "x": 743.994140625,
-                    "y": 513.986328125
+                    "y": 513.994140625
                   },
                   "target": {
                     "x": 0,
@@ -457,7 +457,7 @@
                   "targetName": "chr-aws-jkt",
                   "targetOriginal": {
                     "x": 1014.990234375,
-                    "y": 514.986328125
+                    "y": 514.994140625
                   }
                 }
               ],
@@ -550,7 +550,7 @@
                   },
                   "sourceOriginal": {
                     "x": 660.986328125,
-                    "y": 255.978515625
+                    "y": 255.986328125
                   },
                   "target": {
                     "x": 0,
@@ -559,7 +559,7 @@
                   "targetName": "chr-azure-jkt",
                   "targetOriginal": {
                     "x": 743.994140625,
-                    "y": 513.986328125
+                    "y": 513.994140625
                   }
                 },
                 {
@@ -581,7 +581,7 @@
                   },
                   "sourceOriginal": {
                     "x": 660.986328125,
-                    "y": 255.978515625
+                    "y": 255.986328125
                   },
                   "target": {
                     "x": 0,
@@ -590,7 +590,7 @@
                   "targetName": "chr-aws-sg",
                   "targetOriginal": {
                     "x": 1097.978515625,
-                    "y": 256.978515625
+                    "y": 256.986328125
                   }
                 },
                 {
@@ -612,7 +612,7 @@
                   },
                   "sourceOriginal": {
                     "x": 660.986328125,
-                    "y": 255.978515625
+                    "y": 255.986328125
                   },
                   "target": {
                     "x": 0,
@@ -620,8 +620,8 @@
                   },
                   "targetName": "chr-aliyun-ms",
                   "targetOriginal": {
-                    "x": 450,
-                    "y": 256
+                    "x": 449.990234375,
+                    "y": 256.986328125
                   }
                 }
               ],
@@ -629,8 +629,8 @@
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "id": "chr-aliyun-jkt",
-              "name": "chr-aliyun-jkt",
+              "id": "chr-aliyun-nextops",
+              "name": "chr-aliyun-nextops",
               "placement": {
                 "height": 47.98828125,
                 "left": 637,
@@ -658,20 +658,21 @@
                 },
                 "size": 13,
                 "text": {
-                  "fixed": "chr-aliyun-jkt"
+                  "fixed": "chr-aliyun-nextops"
                 }
               },
               "constraint": {
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "id": "label_chr-aliyun-jkt",
-              "name": "label_chr-aliyun-jkt",
+              "id": "label_chr-aliyun-nextops",
+              "name": "label_chr-aliyun-nextops",
               "placement": {
-                "height": 25.99609375,
-                "left": 496,
-                "top": 243,
-                "width": 130
+                "height": 26,
+                "left": 586,
+                "rotation": 340,
+                "top": 196,
+                "width": 150
               },
               "type": "text"
             },
@@ -773,7 +774,7 @@
           "expr": "max(rate(ifHCInOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-gcp-jkt\", ifName=\"gre-ali\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
-          "legendFormat": "GCP <-> Aliyun",
+          "legendFormat": "GCP <-> Aliyun NextOps",
           "refId": "rate_gcp_ali"
         },
         {
@@ -806,7 +807,7 @@
           "expr": "max(rate(ifHCInOctets{instance=\"chr-azure-jkt\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-azure-jkt\", ifName=\"gre-ali\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
-          "legendFormat": "Aliyun <-> Azure",
+          "legendFormat": "Aliyun NextOps <-> Azure",
           "refId": "rate_ali_azure"
         },
         {
@@ -817,7 +818,7 @@
           "expr": "max(rate(ifHCInOctets{instance=\"chr-aws-sg\", ifName=\"gre-ali\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aws-sg\", ifName=\"gre-ali\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
-          "legendFormat": "Aliyun <-> AWS SG",
+          "legendFormat": "Aliyun NextOps <-> AWS SG",
           "refId": "rate_ali_awssg"
         },
         {
@@ -847,7 +848,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "max(rate(ifHCInOctets{instance=\"chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8)",
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-aliyun-nextops\", ifName=\"gre-ms\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aliyun-nextops\", ifName=\"gre-ms\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
           "legendFormat": "Aliyun NextOps <-> Aliyun MS",
@@ -1149,5 +1150,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Weathermap",
   "uid": "mikrotik-chr-weathermap",
-  "version": 12
+  "version": 16
 }
