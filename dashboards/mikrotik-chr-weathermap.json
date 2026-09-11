@@ -119,7 +119,7 @@
                     "x": 0,
                     "y": 0
                   },
-                  "targetName": "chr-aliyun-jkt",
+                  "targetName": "chr-aliyun-nextops",
                   "targetOriginal": {
                     "x": 660.986328125,
                     "y": 255.986328125
@@ -629,8 +629,8 @@
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "id": "chr-aliyun-jkt",
-              "name": "chr-aliyun-jkt",
+              "id": "chr-aliyun-nextops",
+              "name": "chr-aliyun-nextops",
               "placement": {
                 "height": 47.98828125,
                 "left": 637,
@@ -658,15 +658,15 @@
                 },
                 "size": 13,
                 "text": {
-                  "fixed": "chr-aliyun-nextops (jkt)"
+                  "fixed": "chr-aliyun-nextops"
                 }
               },
               "constraint": {
                 "horizontal": "left",
                 "vertical": "top"
               },
-              "id": "label_chr-aliyun-jkt",
-              "name": "label_chr-aliyun-jkt",
+              "id": "label_chr-aliyun-nextops",
+              "name": "label_chr-aliyun-nextops",
               "placement": {
                 "height": 26,
                 "left": 586,
@@ -848,7 +848,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "max(rate(ifHCInOctets{instance=\"chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8)",
+          "expr": "max(rate(ifHCInOctets{instance=~\"chr-aliyun-nextops|chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8 or rate(ifHCOutOctets{instance=~\"chr-aliyun-nextops|chr-aliyun-jkt\", ifName=\"gre-ms\"}[1m]) * 8)",
           "format": "table",
           "instant": true,
           "legendFormat": "Aliyun NextOps <-> Aliyun MS",
@@ -1150,5 +1150,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Weathermap",
   "uid": "mikrotik-chr-weathermap",
-  "version": 18
+  "version": 19
 }

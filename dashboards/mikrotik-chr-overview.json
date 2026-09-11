@@ -89,7 +89,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "up{instance=\"$instance\", job=\"snmp-chr\"}",
+          "expr": "up{instance=~\"$instance|chr-aliyun-jkt\", job=\"snmp-chr\"}",
           "legendFormat": "Status",
           "refId": "A"
         }
@@ -141,7 +141,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "sysUpTime{instance=\"$instance\"} / 100",
+          "expr": "sysUpTime{instance=~\"$instance|chr-aliyun-jkt\"} / 100",
           "legendFormat": "Uptime",
           "refId": "A"
         }
@@ -194,7 +194,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "avg(hrProcessorLoad{instance=\"$instance\"})",
+          "expr": "avg(hrProcessorLoad{instance=~\"$instance|chr-aliyun-jkt\"})",
           "legendFormat": "CPU Load",
           "refId": "A"
         }
@@ -247,7 +247,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "(hrStorageUsed{instance=\"$instance\", hrStorageDescr=\"main memory\"} / hrStorageSize{instance=\"$instance\", hrStorageDescr=\"main memory\"}) * 100",
+          "expr": "(hrStorageUsed{instance=~\"$instance|chr-aliyun-jkt\", hrStorageDescr=\"main memory\"} / hrStorageSize{instance=~\"$instance|chr-aliyun-jkt\", hrStorageDescr=\"main memory\"}) * 100",
           "legendFormat": "RAM Used",
           "refId": "A"
         }
@@ -309,7 +309,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "sum(increase(ifHCInOctets{instance=\"$instance\", ifName=~\"$interface\", ifName!=\"lo\"}[$__range]))",
+          "expr": "sum(increase(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[$__range]))",
           "legendFormat": "Total In",
           "refId": "A"
         }
@@ -359,7 +359,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "sum(increase(ifHCOutOctets{instance=\"$instance\", ifName=~\"$interface\", ifName!=\"lo\"}[$__range]))",
+          "expr": "sum(increase(ifHCOutOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[$__range]))",
           "legendFormat": "Total Out",
           "refId": "A"
         }
@@ -408,7 +408,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "sum(increase(ifHCInOctets{instance=\"$instance\", ifName=~\"$interface\", ifName!=\"lo\"}[$__range])) + sum(increase(ifHCOutOctets{instance=\"$instance\", ifName=~\"$interface\", ifName!=\"lo\"}[$__range]))",
+          "expr": "sum(increase(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[$__range])) + sum(increase(ifHCOutOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[$__range]))",
           "legendFormat": "Combined Total",
           "refId": "A"
         }
@@ -472,7 +472,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "rate(ifHCInOctets{instance=\"$instance\", ifName=~\"$interface\", ifName!=\"lo\"}[1m]) * 8",
+          "expr": "rate(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[1m]) * 8",
           "legendFormat": "{{ifName}} In",
           "refId": "A"
         }
@@ -524,7 +524,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "rate(ifHCOutOctets{instance=\"$instance\", ifName=~\"$interface\", ifName!=\"lo\"}[1m]) * 8",
+          "expr": "rate(ifHCOutOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[1m]) * 8",
           "legendFormat": "{{ifName}} Out",
           "refId": "A"
         }
@@ -804,7 +804,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "hrProcessorLoad{instance=\"$instance\"}",
+          "expr": "hrProcessorLoad{instance=~\"$instance|chr-aliyun-jkt\"}",
           "legendFormat": "Core {{hrDeviceIndex}}",
           "refId": "A"
         }
@@ -849,7 +849,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "hrStorageUsed{instance=\"$instance\"} * hrStorageAllocationUnits{instance=\"$instance\"}",
+          "expr": "hrStorageUsed{instance=~\"$instance|chr-aliyun-jkt\"} * hrStorageAllocationUnits{instance=~\"$instance|chr-aliyun-jkt\"}",
           "legendFormat": "{{hrStorageDescr}} Used",
           "refId": "A"
         },
@@ -858,7 +858,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "hrStorageSize{instance=\"$instance\"} * hrStorageAllocationUnits{instance=\"$instance\"}",
+          "expr": "hrStorageSize{instance=~\"$instance|chr-aliyun-jkt\"} * hrStorageAllocationUnits{instance=~\"$instance|chr-aliyun-jkt\"}",
           "legendFormat": "{{hrStorageDescr}} Total",
           "refId": "B"
         }
@@ -882,8 +882,8 @@
       {
         "allowCustomValue": true,
         "current": {
-          "text": "chr-aliyun-jkt",
-          "value": "chr-aliyun-jkt"
+          "text": "chr-aliyun-nextops",
+          "value": "chr-aliyun-nextops"
         },
         "datasource": {
           "type": "prometheus",
@@ -897,7 +897,7 @@
         "name": "instance",
         "options": [],
         "query": {
-          "query": "query_result(up{job=\"snmp-chr\", instance=~\"chr-.*-.*\"} == 1)",
+          "query": "query_result(up{job=\"snmp-chr\", instance=~\"chr-.*-.*\", instance!=\"chr-aliyun-jkt\"} == 1)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -917,7 +917,7 @@
           "type": "prometheus",
           "uid": "afvwy8fsbq0hsa"
         },
-        "definition": "label_values(ifHCInOctets{instance=\"$instance\", ifName!=\"lo\"}, ifName)",
+        "definition": "label_values(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName!=\"lo\"}, ifName)",
         "hide": 0,
         "includeAll": true,
         "label": "Interface",
@@ -925,7 +925,7 @@
         "name": "interface",
         "options": [],
         "query": {
-          "query": "label_values(ifHCInOctets{instance=\"$instance\", ifName!=\"lo\"}, ifName)",
+          "query": "label_values(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName!=\"lo\"}, ifName)",
           "refId": "InterfaceVariableQuery"
         },
         "refresh": 2,
@@ -957,5 +957,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Overview",
   "uid": "mikrotik-chr-overview",
-  "version": 16
+  "version": 17
 }
