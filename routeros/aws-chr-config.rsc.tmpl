@@ -77,3 +77,9 @@
 /routing/bgp/instance/add name=azure as=__AWS_ASN__ router-id=__AWS_PEERING_IP__
 /routing/bgp/template/add name=azure as=__AWS_ASN__
 /routing/bgp/connection/add name=chr-azure instance=azure remote.address=__AWS_AZURE_TUNNEL_AZURE_IP__/32 .as=__AZURE_ASN__ local.address=__AWS_AZURE_TUNNEL_AWS_IP__ .role=ebgp routing-table=main templates=azure as=__AWS_ASN__ output.network=aws-advertise output.filter-chain=azure-out input.filter=azure-in output.redistribute=bgp
+
+# 9. Interface Queue (CAKE 500M CoDel Fair Queueing)
+/queue/type/add name=cake-multicloud kind=cake cake-flowmode=dual-srchost cake-bandwidth=500.0Mbps cake-rtt=5ms cake-diffserv=diffserv4 cake-ack-filter=filter
+/queue/interface/set [find name=ether1] queue=cake-multicloud
+/queue/interface/set [find name=ether2] queue=cake-multicloud
+
