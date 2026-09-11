@@ -326,6 +326,25 @@ When peering an AWS VPC with on-prem or multi-cloud environments via MikroTik CH
    Configure dynamic MSS clamping on the forward chain of RouterOS:
    ```routeros
    /ip firewall mangle
-   add chain=forward action=change-mss new-mss=clamp-to-pmtu passthrough=yes protocol=tcp tcp-flags=syn tcp-mss=1300-65535 comment="clamp-to-pmtu"
+   add chain=forward action=change-mss new-mss=clamp-to-pmtu passthrough=yes protocol=tcp tcp-flags=syn tcp-mss=1300-65535 comment="clamp-to-pmtu-all"
    ```
+
+## 15. MikroTik CHR as SSH Jump Host: BGP Preferred Source (`pref-src`) Requirement (2026-09-11)
+
+When using a Dual-NIC MikroTik CHR NVA (e.g. in GCP with `ether1` WAN `10.101.16.10` and `ether2` LAN `10.101.0.10`) as an SSH Jump Host (`ProxyJump` / `ssh -J`):
+
+1. **Failure Symptom:**
+   SSH sessions to local same-cloud VMs (`10.101.0.4`) succeed, but SSH to cross-cloud VMs in peered clouds (Alibaba, Azure, AWS) time out during banner exchange with `Connection closed by UNKNOWN port 65535`.
+2. **Root Cause:**
+   SSH client `direct-tcpip` forwarding causes the RouterOS kernel to originate new TCP connections to the remote private IP. By default, RouterOS selects its primary interface IP (`ether1` WAN `10.101.16.10`) as the packet's source IP. Remote cloud Security Groups and Firewalls permit only the peered LAN supernets (`10.101.0.0/16`) and drop packets sourced from the untrusted peering subnet (`10.101.16.10`).
+3. **Fix:**
+   Explicitly specify `set pref-src <LAN_IP>` inside the BGP Ingress Filter rules on RouterOS:
+   ```routeros
+   /routing/filter/rule
+   set [find chain=ali-in] rule="... set distance 20; set pref-src 10.101.0.10; accept ..."
+   set [find chain=azure-in] rule="... set distance 20; set pref-src 10.101.0.10; accept ..."
+   set [find chain=aws-in] rule="... set distance 20; set pref-src 10.101.0.10; accept ..."
+   ```
+   This forces RouterOS to source all locally-originated cross-cloud traffic (including SSH Jump Host forward sockets) deterministically from the permitted LAN IP (`10.101.0.10`).
+
 
