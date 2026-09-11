@@ -89,7 +89,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "up{instance=~\"$instance|chr-aliyun-jkt\", job=\"snmp-chr\"}",
+          "expr": "max(up{instance=~\"$instance|chr-aliyun-jkt\", job=\"snmp-chr\"})",
           "legendFormat": "Status",
           "refId": "A"
         }
@@ -141,7 +141,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "sysUpTime{instance=~\"$instance|chr-aliyun-jkt\"} / 100",
+          "expr": "max(sysUpTime{instance=~\"$instance|chr-aliyun-jkt\"} / 100)",
           "legendFormat": "Uptime",
           "refId": "A"
         }
@@ -247,7 +247,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "(hrStorageUsed{instance=~\"$instance|chr-aliyun-jkt\", hrStorageDescr=\"main memory\"} / hrStorageSize{instance=~\"$instance|chr-aliyun-jkt\", hrStorageDescr=\"main memory\"}) * 100",
+          "expr": "max((hrStorageUsed{instance=~\"$instance|chr-aliyun-jkt\", hrStorageDescr=\"main memory\"} / hrStorageSize{instance=~\"$instance|chr-aliyun-jkt\", hrStorageDescr=\"main memory\"}) * 100)",
           "legendFormat": "RAM Used",
           "refId": "A"
         }
@@ -472,7 +472,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "rate(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[1m]) * 8",
+          "expr": "max by (ifName) (rate(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[1m]) * 8)",
           "legendFormat": "{{ifName}} In",
           "refId": "A"
         }
@@ -524,7 +524,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "rate(ifHCOutOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[1m]) * 8",
+          "expr": "max by (ifName) (rate(ifHCOutOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName=~\"$interface\", ifName!=\"lo\"}[1m]) * 8)",
           "legendFormat": "{{ifName}} Out",
           "refId": "A"
         }
@@ -804,7 +804,7 @@
             "type": "prometheus",
             "uid": "afvwy8fsbq0hsa"
           },
-          "expr": "hrProcessorLoad{instance=~\"$instance|chr-aliyun-jkt\"}",
+          "expr": "max by (hrDeviceIndex) (hrProcessorLoad{instance=~\"$instance|chr-aliyun-jkt\"})",
           "legendFormat": "Core {{hrDeviceIndex}}",
           "refId": "A"
         }
@@ -957,5 +957,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Overview",
   "uid": "mikrotik-chr-overview",
-  "version": 17
+  "version": 18
 }
