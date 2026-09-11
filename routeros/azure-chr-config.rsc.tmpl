@@ -53,7 +53,7 @@
 /ip/route/add dst-address=__AZURE_SUPERNET__ gateway=__AZURE_PRIVATE_IP__ comment="vnet-network"
 
 # 6. Mangle (MSS Clamping) & NAT
-/ip/firewall/mangle/add chain=forward action=change-mss new-mss=__TUNNEL_MSS__ passthrough=yes tcp-flags=syn protocol=tcp tcp-mss=1361-65535 comment="clamp MSS for tunnel traffic"
+/ip/firewall/mangle/add chain=forward action=change-mss new-mss=clamp-to-pmtu passthrough=yes tcp-flags=syn protocol=tcp tcp-mss=1300-65535 comment="clamp-to-pmtu-all"
 /ip/firewall/nat/add chain=srcnat action=masquerade dst-address-list=!cloud out-interface=ether1 comment="NAT private subnet to the internet, never to the peer"
 
 # 7. Routing Filter Rules (Distance 20 for direct, Distance 30 for transit)
