@@ -17,8 +17,8 @@ data "azurerm_subnet" "private_subnet" {
 # Menambahkan static route ke Aliyun & GCP pada route table eksisting: rt-nextops-private
 # Next Hop spesifik diarahkan ke Private Interface CHR (10.126.1.100)
 
-resource "azurerm_route" "private_to_aliyun" {
-  name                   = "to-aliyun-via-chr"
+resource "azurerm_route" "private_to_aliyun_ms" {
+  name                   = "to-aliyun-ms"
   resource_group_name    = var.network_resource_group_name
   route_table_name       = "rt-nextops-private"
   address_prefix         = var.aliyun_vpc_cidr
@@ -26,8 +26,8 @@ resource "azurerm_route" "private_to_aliyun" {
   next_hop_in_ip_address = var.chr_private_ip
 }
 
-resource "azurerm_route" "private_to_aliyun_spoke" {
-  name                   = "to-aliyun-spoke-via-chr"
+resource "azurerm_route" "private_to_aliyun_nextops" {
+  name                   = "to-aliyun-nextops"
   resource_group_name    = var.network_resource_group_name
   route_table_name       = "rt-nextops-private"
   address_prefix         = var.aliyun_spoke_vpc_cidr
@@ -83,14 +83,14 @@ resource "azurerm_route_table" "public_rt" {
   resource_group_name = var.network_resource_group_name
 
   route {
-    name                   = "to-aliyun-via-chr"
+    name                   = "to-aliyun-ms"
     address_prefix         = var.aliyun_vpc_cidr
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.chr_private_ip
   }
 
   route {
-    name                   = "to-aliyun-spoke-via-chr"
+    name                   = "to-aliyun-nextops"
     address_prefix         = var.aliyun_spoke_vpc_cidr
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.chr_private_ip
