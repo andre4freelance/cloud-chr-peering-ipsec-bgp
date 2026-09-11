@@ -45,3 +45,16 @@ variable "gcp_vpc_cidr" {
   description = "GCP VPC Supernet CIDR"
   default     = "10.101.0.0/16"
 }
+
+variable "aws_nextops_cidr" {
+  type        = string
+  description = "AWS Singapore NextOps VPC CIDR"
+  default     = "10.29.0.0/18"
+}
+
+variable "aws_ms_cidr" {
+  type        = string
+  description = "AWS Jakarta Managed Service VPC CIDR"
+  default     = "172.19.0.0/16"
+}
+

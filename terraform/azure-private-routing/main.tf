@@ -44,6 +44,33 @@ resource "azurerm_route" "private_to_gcp" {
   next_hop_in_ip_address = var.chr_private_ip
 }
 
+resource "azurerm_route" "private_to_aws_nextops" {
+  name                   = "to-aws-nextops"
+  resource_group_name    = var.network_resource_group_name
+  route_table_name       = "rt-nextops-private"
+  address_prefix         = var.aws_nextops_cidr
+  next_hop_type          = "VirtualAppliance"
+  next_hop_in_ip_address = var.chr_private_ip
+}
+
+resource "azurerm_route" "private_to_aws_ms" {
+  name                   = "to-aws-ms-via-chr"
+  resource_group_name    = var.network_resource_group_name
+  route_table_name       = "rt-nextops-private"
+  address_prefix         = var.aws_ms_cidr
+  next_hop_type          = "VirtualAppliance"
+  next_hop_in_ip_address = var.chr_private_ip
+}
+
+resource "azurerm_route" "default_via_chr" {
+  name                   = "default-via-nat"
+  resource_group_name    = var.network_resource_group_name
+  route_table_name       = "rt-nextops-private"
+  address_prefix         = "0.0.0.0/0"
+  next_hop_type          = "VirtualAppliance"
+  next_hop_in_ip_address = var.chr_private_ip
+}
+
 # ==============================================================================
 # ROUTING UNTUK SUBNET-PUBLIC
 # ==============================================================================
@@ -72,6 +99,20 @@ resource "azurerm_route_table" "public_rt" {
   route {
     name                   = "to-gcp-via-chr"
     address_prefix         = var.gcp_vpc_cidr
+    next_hop_type          = "VirtualAppliance"
+    next_hop_in_ip_address = var.chr_private_ip
+  }
+
+  route {
+    name                   = "to-aws-nextops"
+    address_prefix         = var.aws_nextops_cidr
+    next_hop_type          = "VirtualAppliance"
+    next_hop_in_ip_address = var.chr_private_ip
+  }
+
+  route {
+    name                   = "to-aws-ms-via-chr"
+    address_prefix         = var.aws_ms_cidr
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.chr_private_ip
   }
