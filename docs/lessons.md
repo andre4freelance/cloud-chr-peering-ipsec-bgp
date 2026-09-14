@@ -365,4 +365,18 @@ When using a Dual-NIC MikroTik CHR NVA (e.g. in GCP with `ether1` WAN `10.101.16
    ```
    With `forwarding-enabled=both` and `pref-src` properly assigned in BGP filter chains, the CHR operates as a high-performance, transparent bastion jump host to any same-cloud or cross-cloud private workload without requiring a dedicated Linux bastion VM.
 
+## 17. Bandwidth-Test (`btest`) User Privilege Principle: Strict Policy Isolation (`policy=test` only, never `group=full`) (2026-09-14)
+
+1. **Security Vulnerability / Risk:**
+   Creating a utility user `btest` under group `full` for running `/tool/bandwidth-test` grants full administrative control over the router (routing tables, firewall, tunnels, user credentials, Winbox/SSH access). If the user or credentials linger on the router, it violates least-privilege principles and introduces an unnecessary attack vector.
+2. **Standard Operating Rule:**
+   - **Delete When Done:** Any temporary user created for testing must be purged immediately after benchmarks complete (`/user/remove [find name="btest"]`).
+   - **Strict Policy Restriction (If Needed):** If automated or persistent bandwidth testing is ever required, create a dedicated group restricted strictly to the `test` policy:
+     ```routeros
+     /user/group/add name=btest-only policy=test,!local,!telnet,!ssh,!ftp,!reboot,!read,!write,!policy,!winbox,!password,!web,!sniff,!sensitive,!api,!romon,!rest-api
+     /user/add name=btest group=btest-only password="<STRONG_RANDOM_PASSWORD>"
+     ```
+     Never assign `btest` to `full`, `write`, or `read`.
+
+
 
