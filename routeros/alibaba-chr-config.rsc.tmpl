@@ -86,3 +86,6 @@
 /queue/interface/set [find name=ether1] queue=cake-multicloud
 /queue/interface/set [find name=ether2] queue=cake-multicloud
 
+# 10. DNS Caching Resolver for Local Workloads
+/ip/dns/set allow-remote-requests=yes servers=1.1.1.1,8.8.8.8 cache-size=2048KiB
+
