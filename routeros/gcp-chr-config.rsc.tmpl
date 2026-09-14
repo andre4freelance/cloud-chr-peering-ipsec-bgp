@@ -6,6 +6,9 @@
 
 /system/identity/set name=gcp-chr-peering
 
+# Enable SSH TCP forwarding for Jump Host (Bastion) support
+/ip/ssh/set forwarding-enabled=both
+
 # 1. IPsec Proposals & Profiles
 /ip/ipsec/profile/add name=ali dh-group=modp2048 enc-algorithm=aes-256 hash-algorithm=sha256 lifetime=8h nat-traversal=yes dpd-interval=8s dpd-maximum-failures=4
 /ip/ipsec/proposal/add name=ali auth-algorithms="" enc-algorithms=aes-256-gcm lifetime=1h pfs-group=modp2048

@@ -347,4 +347,22 @@ When using a Dual-NIC MikroTik CHR NVA (e.g. in GCP with `ether1` WAN `10.101.16
    ```
    This forces RouterOS to source all locally-originated cross-cloud traffic (including SSH Jump Host forward sockets) deterministically from the permitted LAN IP (`10.101.0.10`).
 
+## 16. RouterOS SSH TCP Forwarding (`forwarding-enabled=both`) for Bastion / Jump Host (2026-09-14)
+
+1. **Failure Symptom:**
+   Attempts to use a MikroTik CHR as an OpenSSH ProxyJump host (`ssh -J user@<chr-ip>:7822 vm-user@<private-ip>`) fail immediately during banner exchange with:
+   ```text
+   Connection timed out during banner exchange
+   Connection to UNKNOWN port 65535 timed out
+   ```
+   Direct interactive SSH into RouterOS works, but client-driven TCP forwarding channels (`stdio-forward` / `direct-tcpip`) fail to connect to the target port 22.
+2. **Root Cause:**
+   In RouterOS v7, SSH TCP forwarding is disabled by default (`forwarding-enabled: no`) for security hardening. The SSH daemon refuses to forward client sockets to local or remote addresses.
+3. **Fix:**
+   Explicitly enable bidirectional forwarding in RouterOS:
+   ```routeros
+   /ip/ssh/set forwarding-enabled=both
+   ```
+   With `forwarding-enabled=both` and `pref-src` properly assigned in BGP filter chains, the CHR operates as a high-performance, transparent bastion jump host to any same-cloud or cross-cloud private workload without requiring a dedicated Linux bastion VM.
+
 
