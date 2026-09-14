@@ -378,5 +378,21 @@ When using a Dual-NIC MikroTik CHR NVA (e.g. in GCP with `ether1` WAN `10.101.16
      ```
      Never assign `btest` to `full`, `write`, or `read`.
 
+## 18. CAKE AQM RTT Parameter Calibration for Multi-Cloud Overlays (`cake-rtt=100ms`, never `5ms`) (2026-09-14)
+
+1. **Failure Symptom:**
+   Under elevated traffic across the multi-cloud mesh (e.g. telemetry scraping, remote database queries between Azure and GCP), web applications hosted in Azure (Uptime Kuma, Passbolt) intermittently freeze, hang, and return `504 Gateway Timeout` or `502 Bad Gateway` via Cloudflare Tunnel. Interface counters show massive TX drops on GRE tunnel interfaces (`gre-gcp tx-drop: 923,761`, `gre-azure tx-drop: 1,323,560`).
+2. **Root Cause:**
+   CAKE AQM was configured with `cake-rtt=5ms` under the assumption that all intra-Jakarta cloud-to-cloud connections would exhibit low latency (~2ms).
+   However, cross-AS transit between Microsoft Azure (`indonesiacentral`) and Google Cloud (`asia-southeast2`) exhibits a real round-trip latency of **~28.7 ms** (and AWS Singapore exhibits ~34 ms).
+   In CAKE's CoDel algorithm, target queue delay is derived as $\text{RTT} / 20 = 5\text{ms} / 20 = \mathbf{0.25\text{ ms}}$. Because packets on the 29ms link naturally reside in queue longer than 250 µs, CoDel falsely diagnoses catastrophic bufferbloat and executes an aggressive **drop storm**, dropping millions of legitimate TCP packets for MariaDB (`10.101.64.10:3306`) and HTTP traffic.
+3. **Fix:**
+   Standardize `cake-rtt=100ms` (the standard CAKE WAN default) across all CHRs:
+   ```routeros
+   /queue/type/set [find name="cake-multicloud"] cake-rtt=100ms
+   ```
+   With `cake-rtt=100ms`, the CoDel target buffer delay is 5ms, perfectly accommodating cross-cloud inter-region and inter-cloud WAN latency without false-positive packet drops.
+
+
 
 

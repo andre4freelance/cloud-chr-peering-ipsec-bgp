@@ -82,7 +82,7 @@
 /routing/bgp/connection/add name=chr-aws instance=aws remote.address=__AWS_ALI_TUNNEL_AWS_IP__/32 .as=__AWS_ASN__ local.address=__AWS_ALI_TUNNEL_ALI_IP__ .role=ebgp routing-table=main templates=aws as=__ALI_ASN__ output.network=ali-advertise output.filter-chain=aws-out input.filter=aws-in output.redistribute=bgp
 
 # 9. Interface Queue (CAKE 500M CoDel Fair Queueing)
-/queue/type/add name=cake-multicloud kind=cake cake-flowmode=dual-srchost cake-bandwidth=500.0Mbps cake-rtt=5ms cake-diffserv=diffserv4 cake-ack-filter=filter
+/queue/type/add name=cake-multicloud kind=cake cake-flowmode=dual-srchost cake-bandwidth=500.0Mbps cake-rtt=100ms cake-diffserv=diffserv4 cake-ack-filter=filter
 /queue/interface/set [find name=ether1] queue=cake-multicloud
 /queue/interface/set [find name=ether2] queue=cake-multicloud
 
