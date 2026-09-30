@@ -393,6 +393,16 @@ When using a Dual-NIC MikroTik CHR NVA (e.g. in GCP with `ether1` WAN `10.101.16
    ```
    With `cake-rtt=100ms`, the CoDel target buffer delay is 5ms, perfectly accommodating cross-cloud inter-region and inter-cloud WAN latency without false-positive packet drops.
 
+## 19. CHR Stale License TX Throttling: Enforced 1.0 Mbps Limit until Reboot (2026-10-01)
+
+1. **Failure Symptom:**
+   Cross-cloud database queries (e.g. PostgreSQL bulk fetch, 1 MB+) between Kubernetes pods in Alibaba Cloud (`10.151.10.135`) and AWS Jakarta (`172.19.10.143`) take ~11 to 30 seconds (~33–106 KB/s), despite an overlay RTT of only 2.3 ms and small queries (0.1 MB) completing in 11 ms. Packet captures reveal that as soon as the sender streams sustained data, TCP ACKs become stuck and retransmissions flood every 20 ms.
+2. **Root Cause:**
+   RouterOS CHR free-tier limits interface TX bandwidth to **1.0 Mbps (~106–128 KB/s payload)**. Even when `/system/license/print` displays `level: p-unlimited`, the license is only *stored* on disk and not yet active in the kernel if `next-renewal-at` is empty or missing.
+3. **Fix:**
+   Reboot the affected CHR instance (`/system reboot`). Upon boot, verify that `next-renewal-at` is populated (`/system/license/print`). Once populated, the 1.0 Mbps kernel transmit limiter is released and throughput immediately reaches line rate (~300 Mbps, 1 MB transfer completing in 30 ms).
+
+
 
 
 
