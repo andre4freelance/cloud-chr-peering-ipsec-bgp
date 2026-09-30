@@ -623,6 +623,37 @@
                     "x": 449.990234375,
                     "y": 256.986328125
                   }
+                },
+                {
+                  "color": {
+                    "field": "Value #rate_ali_awsjkt",
+                    "fixed": "#73BF69",
+                    "mode": "thresholds"
+                  },
+                  "direction": {
+                    "fixed": "none",
+                    "mode": "fixed"
+                  },
+                  "size": {
+                    "fixed": 3
+                  },
+                  "source": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "sourceOriginal": {
+                    "x": 660.986328125,
+                    "y": 255.986328125
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "targetName": "chr-aws-jkt",
+                  "targetOriginal": {
+                    "x": 1014.990234375,
+                    "y": 514.994140625
+                  }
                 }
               ],
               "constraint": {
@@ -853,6 +884,17 @@
           "instant": true,
           "legendFormat": "Aliyun NextOps <-> Aliyun MS",
           "refId": "rate_ali_ms"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "afvwy8fsbq0hsa"
+          },
+          "expr": "max(rate(ifHCInOctets{instance=\"chr-aws-jkt\", ifName=\"gre-aliyun\"}[1m]) * 8 or rate(ifHCOutOctets{instance=\"chr-aws-jkt\", ifName=\"gre-aliyun\"}[1m]) * 8)",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "Aliyun NextOps <-> AWS JKT",
+          "refId": "rate_ali_awsjkt"
         }
       ],
       "title": "Multi-Cloud Network Weathermap",
@@ -1150,5 +1192,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Weathermap",
   "uid": "mikrotik-chr-weathermap",
-  "version": 19
+  "version": 21
 }
