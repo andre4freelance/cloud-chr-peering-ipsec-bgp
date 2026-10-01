@@ -917,7 +917,7 @@
           "type": "prometheus",
           "uid": "afvwy8fsbq0hsa"
         },
-        "definition": "label_values(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName!=\"lo\"}, ifName)",
+        "definition": "label_values(ifHCInOctets{instance=~\"$instance\", ifName!=\"lo\"}, ifName)",
         "hide": 0,
         "includeAll": true,
         "label": "Interface",
@@ -925,10 +925,10 @@
         "name": "interface",
         "options": [],
         "query": {
-          "query": "label_values(ifHCInOctets{instance=~\"$instance|chr-aliyun-jkt\", ifName!=\"lo\"}, ifName)",
+          "query": "label_values(ifHCInOctets{instance=~\"$instance\", ifName!=\"lo\"}, ifName)",
           "refId": "InterfaceVariableQuery"
         },
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
@@ -957,5 +957,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Overview",
   "uid": "mikrotik-chr-overview",
-  "version": 18
+  "version": 20
 }

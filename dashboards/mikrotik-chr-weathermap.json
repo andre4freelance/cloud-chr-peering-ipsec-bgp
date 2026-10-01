@@ -1151,7 +1151,7 @@
           "type": "prometheus",
           "uid": "afvwy8fsbq0hsa"
         },
-        "definition": "label_values(ifHCInOctets{instance=\"$instance\", ifName!=\"lo\"}, ifName)",
+        "definition": "label_values(ifHCInOctets{instance=\"$instance\", ifName=~\"gre-.*\"}, ifName)",
         "hide": 0,
         "includeAll": false,
         "label": "GRE Tunnel Interface",
@@ -1159,12 +1159,11 @@
         "name": "interface",
         "options": [],
         "query": {
-          "query": "label_values(ifHCInOctets{instance=\"$instance\", ifName!=\"lo\"}, ifName)",
+          "query": "label_values(ifHCInOctets{instance=\"$instance\", ifName=~\"gre-.*\"}, ifName)",
           "refId": "InterfaceVar"
         },
-        "refresh": 2,
-        "regex": "/(gre-.*)/",
-        "regexApplyTo": "value",
+        "refresh": 1,
+        "regex": "",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -1192,5 +1191,5 @@
   "timezone": "browser",
   "title": "MikroTik CHR - Multi-Cloud Network Weathermap",
   "uid": "mikrotik-chr-weathermap",
-  "version": 21
+  "version": 22
 }
