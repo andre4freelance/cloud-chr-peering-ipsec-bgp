@@ -28,10 +28,10 @@ variable "chr_private_ip" {
   default     = "10.126.1.100"
 }
 
-variable "aliyun_vpc_cidr" {
+variable "huawei_vpc_cidr" {
   type        = string
-  description = "Alibaba Cloud VPC Supernet CIDR (Hub managedservice-vpc)"
-  default     = "10.151.64.0/18"
+  description = "Huawei Cloud NextOps VPC CIDR"
+  default     = "10.64.0.0/18"
 }
 
 variable "aliyun_spoke_vpc_cidr" {
@@ -50,11 +50,5 @@ variable "aws_nextops_cidr" {
   type        = string
   description = "AWS Singapore NextOps VPC CIDR"
   default     = "10.29.0.0/18"
-}
-
-variable "aws_ms_cidr" {
-  type        = string
-  description = "AWS Jakarta Managed Service VPC CIDR"
-  default     = "172.19.0.0/16"
 }
 

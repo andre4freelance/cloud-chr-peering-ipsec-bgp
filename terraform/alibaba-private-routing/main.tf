@@ -84,14 +84,14 @@ resource "alicloud_route_entry" "private_to_aws_sin" {
   description           = "Route to AWS Singapore VPC (10.29.0.0/18) via MikroTik CHR"
 }
 
-# Route ke AWS Jakarta Managed Service (172.19.0.0/16) -> MikroTik CHR Private ENI
-resource "alicloud_route_entry" "private_to_aws_jkt" {
+# Route ke Huawei Cloud NextOps (10.64.0.0/18) -> MikroTik CHR Private ENI
+resource "alicloud_route_entry" "private_to_huawei" {
   route_table_id        = alicloud_route_table.private_rt.id
-  destination_cidrblock = var.aws_jkt_vpc_cidr
+  destination_cidrblock = var.huawei_vpc_cidr
   nexthop_type          = "NetworkInterface"
   nexthop_id            = var.chr_private_eni_id
-  name                  = "to-aws-jkt-via-chr"
-  description           = "Route to AWS Jakarta MS VPC (172.19.0.0/16) via MikroTik CHR"
+  name                  = "to-huawei-via-chr"
+  description           = "Route to Huawei Cloud NextOps VPC (10.64.0.0/18) via MikroTik CHR"
 }
 
 # ==============================================================================
@@ -163,13 +163,13 @@ resource "alicloud_route_entry" "public_to_aws_sin" {
   description           = "Route to AWS Singapore VPC (10.29.0.0/18) via MikroTik CHR"
 }
 
-# Route ke AWS Jakarta Managed Service (172.19.0.0/16) -> MikroTik CHR Private ENI
-resource "alicloud_route_entry" "public_to_aws_jkt" {
+# Route ke Huawei Cloud NextOps (10.64.0.0/18) -> MikroTik CHR Private ENI
+resource "alicloud_route_entry" "public_to_huawei" {
   route_table_id        = alicloud_route_table.public_rt.id
-  destination_cidrblock = var.aws_jkt_vpc_cidr
+  destination_cidrblock = var.huawei_vpc_cidr
   nexthop_type          = "NetworkInterface"
   nexthop_id            = var.chr_private_eni_id
-  name                  = "to-aws-jkt-via-chr"
-  description           = "Route to AWS Jakarta MS VPC (172.19.0.0/16) via MikroTik CHR"
+  name                  = "to-huawei-via-chr"
+  description           = "Route to Huawei Cloud NextOps VPC (10.64.0.0/18) via MikroTik CHR"
 }
 

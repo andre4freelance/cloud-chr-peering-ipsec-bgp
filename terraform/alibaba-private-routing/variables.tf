@@ -70,9 +70,9 @@ variable "aws_sin_vpc_cidr" {
   description = "CIDR block of AWS Singapore VPC"
 }
 
-variable "aws_jkt_vpc_cidr" {
+variable "huawei_vpc_cidr" {
   type        = string
-  default     = "172.19.0.0/16"
-  description = "CIDR block of AWS Jakarta Managed Service VPC"
+  default     = "10.64.0.0/18"
+  description = "CIDR block of Huawei Cloud NextOps VPC"
 }
 

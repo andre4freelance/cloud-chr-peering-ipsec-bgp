@@ -14,14 +14,14 @@ data "azurerm_subnet" "private_subnet" {
 # ==============================================================================
 # ROUTING UNTUK SUBNET-PRIVATE
 # ==============================================================================
-# Menambahkan static route ke Aliyun & GCP pada route table eksisting: rt-nextops-private
+# Menambahkan static route ke Aliyun, GCP, AWS, dan Huawei pada route table eksisting: rt-nextops-private
 # Next Hop spesifik diarahkan ke Private Interface CHR (10.126.1.100)
 
-resource "azurerm_route" "private_to_aliyun_ms" {
-  name                   = "to-aliyun-ms"
+resource "azurerm_route" "private_to_huawei" {
+  name                   = "to-huawei-via-chr"
   resource_group_name    = var.network_resource_group_name
   route_table_name       = "rt-nextops-private"
-  address_prefix         = var.aliyun_vpc_cidr
+  address_prefix         = var.huawei_vpc_cidr
   next_hop_type          = "VirtualAppliance"
   next_hop_in_ip_address = var.chr_private_ip
 }
@@ -53,15 +53,6 @@ resource "azurerm_route" "private_to_aws_nextops" {
   next_hop_in_ip_address = var.chr_private_ip
 }
 
-resource "azurerm_route" "private_to_aws_ms" {
-  name                   = "to-aws-ms-via-chr"
-  resource_group_name    = var.network_resource_group_name
-  route_table_name       = "rt-nextops-private"
-  address_prefix         = var.aws_ms_cidr
-  next_hop_type          = "VirtualAppliance"
-  next_hop_in_ip_address = var.chr_private_ip
-}
-
 resource "azurerm_route" "default_via_chr" {
   name                   = "default-via-nat"
   resource_group_name    = var.network_resource_group_name
@@ -75,7 +66,7 @@ resource "azurerm_route" "default_via_chr" {
 # ROUTING UNTUK SUBNET-PUBLIC
 # ==============================================================================
 # Membuat route table baru khusus untuk subnet-public dan meng-attach-nya.
-# Subnet-public tetap default route ke Internet, tapi ke Aliyun & GCP lewat CHR private IP.
+# Subnet-public tetap default route ke Internet, tapi ke cloud lain lewat CHR private IP.
 
 resource "azurerm_route_table" "public_rt" {
   name                = "rt-nextops-public"
@@ -83,8 +74,8 @@ resource "azurerm_route_table" "public_rt" {
   resource_group_name = var.network_resource_group_name
 
   route {
-    name                   = "to-aliyun-ms"
-    address_prefix         = var.aliyun_vpc_cidr
+    name                   = "to-huawei-via-chr"
+    address_prefix         = var.huawei_vpc_cidr
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.chr_private_ip
   }
@@ -106,13 +97,6 @@ resource "azurerm_route_table" "public_rt" {
   route {
     name                   = "to-aws-nextops"
     address_prefix         = var.aws_nextops_cidr
-    next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = var.chr_private_ip
-  }
-
-  route {
-    name                   = "to-aws-ms-via-chr"
-    address_prefix         = var.aws_ms_cidr
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.chr_private_ip
   }
