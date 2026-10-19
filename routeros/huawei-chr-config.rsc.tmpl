@@ -47,6 +47,7 @@
 /interface/gre/add name=gre-ali mtu=__TUNNEL_MTU__ local-address=__HUAWEI_PEERING_IP__ remote-address=__ALI_PEERING_IP__ clamp-tcp-mss=yes dont-fragment=no allow-fast-path=no
 /interface/gre/add name=gre-aws mtu=__TUNNEL_MTU__ local-address=__HUAWEI_PEERING_IP__ remote-address=__AWS_PEERING_IP__ clamp-tcp-mss=yes dont-fragment=no allow-fast-path=no
 
+/ip/address/add address=__HUAWEI_PRIVATE_IP__/20 network=10.64.16.0 interface=ether2 comment="lan-private"
 /ip/address/add address=__HW_GCP_TUNNEL_HW_IP__/30 network=__HW_GCP_TUNNEL_NETWORK__ interface=gre-gcp
 /ip/address/add address=__HW_AZURE_TUNNEL_HW_IP__/30 network=__HW_AZURE_TUNNEL_NETWORK__ interface=gre-azure
 /ip/address/add address=__HW_ALI_TUNNEL_HW_IP__/30 network=__HW_ALI_TUNNEL_NETWORK__ interface=gre-ali
