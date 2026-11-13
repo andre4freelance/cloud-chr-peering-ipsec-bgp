@@ -402,6 +402,22 @@ When using a Dual-NIC MikroTik CHR NVA (e.g. in GCP with `ether1` WAN `10.101.16
 3. **Fix:**
    Reboot the affected CHR instance (`/system reboot`). Upon boot, verify that `next-renewal-at` is populated (`/system/license/print`). Once populated, the 1.0 Mbps kernel transmit limiter is released and throughput immediately reaches line rate (~300 Mbps, 1 MB transfer completing in 30 ms).
 
+## 20. Alibaba Cloud Anti-DDoS Origin Basic 80 Mbps Scrubbing Threshold: WAN Traffic Shaping (2026-11-13)
+
+1. **Failure Symptom:**
+   Large cross-cloud data transfers (e.g. `rsync` migrating databases or files between Azure and Alibaba Cloud) consistently stall and disconnect after transferring ~70 MB. Inbound SSH sessions to instances behind the CHR simultaneously fail during handshake or time out. The failure was initially misdiagnosed as an MTU/MSS PMTUD blackhole because reducing the end-host MTU to 1300 appeared to relieve symptoms.
+2. **Root Cause:**
+   On Alibaba Cloud (region `ap-southeast-5` Jakarta), standard Elastic IP (EIP) instances on the free Anti-DDoS Origin Basic tier have an enforced default traffic scrubbing threshold of **80 Mbps** (`DefenseBpsThreshold: 80`, hard ceiling `MaxBps: 80`).
+   When bulk TCP transfers ramp up and exceed 80 Mbps on the public interface, Alibaba Cloud Anti-DDoS automatically triggers traffic scrubbing (`DdosStatus: defense`), routing EIP ingress/egress through scrubbing centers that rate-limit and drop IPsec NAT-T (UDP 4500) and GRE packets. The scrubbing event can persist for multiple hours (recorded up to 5.9 hours on 2026-11-11).
+3. **Fix:**
+   Implement strict 75 Mbps traffic shaping on `chr-aliyun` WAN (`ether1`) using CAKE AQM and a Simple Queue, ensuring cross-cloud traffic never reaches the 80 Mbps trigger point:
+   ```routeros
+   /queue/type/add name=cake-wan-75m kind=cake cake-bandwidth=75.0Mbps cake-rtt=100ms cake-flowmode=dual-srchost cake-diffserv=diffserv4 cake-ack-filter=filter
+   /queue/interface/set [find interface=ether1] queue=cake-wan-75m
+   /queue/simple/add name=rate-limit-wan-antiddos target=ether1 max-limit=75M/75M comment="Cap WAN traffic below Alibaba Anti-DDoS 80M threshold"
+   ```
+   End hosts maintain standard MTU 1500; TCP flow control paces senders cleanly within the 75 Mbps ceiling without triggering cloud-provider DDoS scrubbing.
+
 
 
 

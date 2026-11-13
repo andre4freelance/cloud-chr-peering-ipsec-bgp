@@ -81,10 +81,12 @@
 /routing/bgp/template/add name=aws as=__ALI_ASN__
 /routing/bgp/connection/add name=chr-aws instance=aws remote.address=__AWS_ALI_TUNNEL_AWS_IP__/32 .as=__AWS_ASN__ local.address=__AWS_ALI_TUNNEL_ALI_IP__ .role=ebgp routing-table=main templates=aws as=__ALI_ASN__ output.network=ali-advertise output.filter-chain=aws-out input.filter=aws-in output.redistribute=bgp
 
-# 9. Interface Queue (CAKE 500M CoDel Fair Queueing)
+# 9. Interface Queue (CAKE 75M on WAN to stay below Alibaba Anti-DDoS 80M threshold, CAKE 500M on LAN)
 /queue/type/add name=cake-multicloud kind=cake cake-flowmode=dual-srchost cake-bandwidth=500.0Mbps cake-rtt=100ms cake-diffserv=diffserv4 cake-ack-filter=filter
-/queue/interface/set [find name=ether1] queue=cake-multicloud
-/queue/interface/set [find name=ether2] queue=cake-multicloud
+/queue/type/add name=cake-wan-75m kind=cake cake-bandwidth=75.0Mbps cake-rtt=100ms cake-flowmode=dual-srchost cake-diffserv=diffserv4 cake-ack-filter=filter
+/queue/interface/set [find interface=ether1] queue=cake-wan-75m
+/queue/interface/set [find interface=ether2] queue=cake-multicloud
+/queue/simple/add name=rate-limit-wan-antiddos target=ether1 max-limit=75M/75M comment="Cap WAN traffic below Alibaba Anti-DDoS 80M threshold"
 
 # 10. DNS Caching Resolver for Local Workloads
 /ip/dns/set allow-remote-requests=yes servers=1.1.1.1,8.8.8.8 cache-size=2048KiB
